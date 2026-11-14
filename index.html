@@ -176,11 +176,12 @@ select,input[type=date]{border:1px solid var(--border);border-radius:9px;backgro
 .case-main{padding:12px 14px}
 .case-title{font-size:14px;font-weight:800;line-height:1.5}
 .case-lede{font-size:12.5px;line-height:1.75;margin:5px 0 10px}
-.case-table-wrap{border:1px solid var(--border);border-radius:10px;overflow-x:auto;background:var(--card);
-  -webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}
+.case-table-wrap{border:1px solid var(--border);border-radius:10px;overflow:auto;background:var(--card);
+  max-height:280px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}
 .case-table{width:100%;min-width:610px;border-collapse:collapse;font-size:11.5px}
 .case-table th{padding:7px 9px;text-align:left;color:var(--muted);font-size:10.5px;font-weight:600;
-  background:var(--soft);border-bottom:1px solid var(--border);white-space:nowrap}
+  background:var(--soft);border-bottom:1px solid var(--border);white-space:nowrap;
+  position:sticky;top:0;z-index:1}
 .case-table td{padding:8px 9px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.55}
 .case-table tr:last-child td{border-bottom:0}
 .case-table .stock-cell{min-width:150px}
@@ -228,6 +229,7 @@ select,input[type=date]{border:1px solid var(--border);border-radius:9px;backgro
 .modal-title{font-size:18px;font-weight:800}
 .modal-sub{font-size:11.5px;color:var(--muted);margin-top:2px}
 .modal-nav{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-top:8px}
+.modal-nav button{min-width:104px;min-height:40px}
 .big-wrap{position:relative;margin-top:8px;border:1px solid var(--border);border-radius:12px;
   background:linear-gradient(180deg,var(--card),var(--soft));overflow:hidden}
 .big-wrap svg{display:block;width:100%;height:auto}
@@ -287,6 +289,8 @@ button,.chip,.stock-card,.tabs button{touch-action:manipulation}
   .tier-row{grid-template-columns:52px 1fr}
   .grid2{grid-template-columns:1fr}
   .modal-card{padding:10px}
+  .case-table-wrap{max-height:220px}
+  .case-table th,.case-table td{padding:6px 8px}
   /* 手机上梯队改为纵向堆叠，避免横向滑四列 */
   .tier-grid{display:block;overflow:visible;padding-bottom:0}
   .tier-col{width:auto;margin-bottom:12px}
@@ -992,7 +996,7 @@ function renderSelected() {
   }).join('');
   $('#selTiers').innerHTML = rows || '<div class="k" style="padding:8px 0">当天没有3板及以上的连板股。</div>';
   $('#selTiers').querySelectorAll('.chip').forEach(el => {
-    el.addEventListener('click', () => openStock(el.dataset.sym, null, state.date));
+    el.addEventListener('click', () => openStock(el.dataset.sym, stockSeriesForDate(state.date, el.dataset.sym), state.date));
   });
   const hit = CASES.filter(c => c.breakDate === state.date);
   const btn = $('#caseJump');
@@ -1458,12 +1462,33 @@ function drawMini(sym, box) {
 }
 
 /* ---------------- 个股大图 ---------------- */
+function stockSeriesForDate(focusDate, includeSym) {
+  const di = DAY_IDX[focusDate];
+  if (di === undefined) return includeSym ? [includeSym] : [];
+  const items = [];
+  groupDay(di, 1).forEach((list, lb) => {
+    list.forEach(c => items.push({ sym: c.run.sym, name: c.run.name, lb }));
+  });
+  const seen = new Set();
+  const syms = items
+    .sort((a, b) => b.lb - a.lb || a.name.localeCompare(b.name, 'zh'))
+    .map(x => x.sym)
+    .filter(sym => {
+      if (seen.has(sym)) return false;
+      seen.add(sym);
+      return true;
+    });
+  if (includeSym && !seen.has(includeSym)) syms.push(includeSym);
+  return syms;
+}
+
 async function openStock(sym, list, focusDate) {
   if (!sym) return;
   focusDate = focusDate || state.date;
-  if (list && list.length) state.modal.list = list.slice();
-  else if (state.modal.list.indexOf(sym) < 0) state.modal.list = [sym];
-  if (state.modal.list.indexOf(sym) < 0) state.modal.list.push(sym);
+  const candidates = Array.isArray(list) && list.length ? list.slice() : stockSeriesForDate(focusDate, sym);
+  if (!candidates.length) candidates.push(sym);
+  if (candidates.indexOf(sym) < 0) candidates.push(sym);
+  state.modal.list = Array.from(new Set(candidates));
   state.modal.sym = sym;
   state.modal.idx = state.modal.list.indexOf(sym);
   state.modal.focusDate = focusDate;
@@ -1495,11 +1520,19 @@ async function openStock(sym, list, focusDate) {
     $('#mOhlc').textContent = '可关闭弹窗后点「重新加载」，或检查网络。';
   }
 }
+function navigateStock(delta) {
+  const m = state.modal;
+  const next = m.idx + delta;
+  if (m.sym === null || next < 0 || next >= m.list.length) return;
+  openStock(m.list[next], m.list.slice(), m.focusDate);
+}
 function closeModal() {
   $('#modal').hidden = true;
   state.modal.sym = null;
   state.modal.bars = null;
   state.modal.focusDate = null;
+  state.modal.idx = -1;
+  state.modal.list = [];
 }
 function focusWindow(bars, focusDate, before, after) {
   before = before == null ? 30 : before;
@@ -2087,12 +2120,10 @@ function bind() {
   $('#mClose').addEventListener('click', closeModal);
   $('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
   $('#mPrev').addEventListener('click', () => {
-    const m = state.modal;
-    if (m.idx > 0) openStock(m.list[m.idx - 1], m.list, m.focusDate);
+    navigateStock(-1);
   });
   $('#mNext').addEventListener('click', () => {
-    const m = state.modal;
-    if (m.idx < m.list.length - 1) openStock(m.list[m.idx + 1], m.list, m.focusDate);
+    navigateStock(1);
   });
   $$('#caseFilters button').forEach(b => {
     b.addEventListener('click', () => {
