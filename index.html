@@ -7,14 +7,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="连板统计">
-<meta name="application-name" content="连板统计">
-<meta name="description" content="开盘啦题材 · 连板统计 · 梯队日线复盘 · 断板节点案例">
+<meta name="apple-mobile-web-app-title" content="天天板">
+<meta name="application-name" content="天天板">
+<meta name="description" content="天天板 · 开盘啦题材 · 连板统计 · 梯队日线复盘 · 断板节点案例">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
 <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-<title>连板统计 · 梯队复盘</title>
+<title>天天板 · 连板统计</title>
 <style>
 :root{
   --bg:#f3f6fa; --fg:#172033; --muted:#64748b; --card:#ffffff; --border:#dce4ef;
@@ -29,14 +29,16 @@
          --ma5:#f2a33c; --ma10:#6ea1ff; --ma20:#b98cff; }
 }
 *{box-sizing:border-box}
-html,body{width:100%;max-width:100%;overflow-x:hidden;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html,body{width:100%;max-width:100%;overflow-x:hidden;-webkit-text-size-adjust:100%;text-size-adjust:100%;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 body{margin:0;color:var(--fg);
   background:
     radial-gradient(circle at 8% 0%,rgba(36,107,253,.08),transparent 30%),
     radial-gradient(circle at 95% 8%,rgba(15,159,143,.07),transparent 26%),
     var(--bg);
   font:14px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
-.wrap{max-width:1240px;margin:0 auto;padding:18px 16px 60px}
+.wrap{max-width:1220px;margin:0 auto;padding:calc(16px + env(safe-area-inset-top,0px))
+  calc(14px + env(safe-area-inset-right,0px)) 60px calc(14px + env(safe-area-inset-left,0px))}
 h1,h2,h3{margin:0;font-weight:700}
 h2{font-size:19px;margin:22px 0 10px}
 h3{font-size:15px;margin:16px 0 8px}
@@ -63,11 +65,15 @@ header::after{content:"";position:absolute;right:-70px;top:-120px;width:310px;he
   box-shadow:0 0 0 42px rgba(255,255,255,.025),0 0 0 86px rgba(255,255,255,.018)}
 .lockup{display:flex;gap:12px;align-items:center;position:relative;z-index:1;min-width:0}
 .mark{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;flex:0 0 auto;
-  font-size:20px;font-weight:800;letter-spacing:1px;
   background:radial-gradient(circle at 74% 18%,rgba(255,255,255,.22),transparent 28%),
     linear-gradient(145deg,#1f4f83,#126976 58%,#0f8a78);
   border:1px solid rgba(255,255,255,.18);
   box-shadow:inset 0 1px rgba(255,255,255,.26),0 8px 20px rgba(15,159,143,.26)}
+.brand-chart{width:31px;height:31px;display:block;overflow:visible;
+  filter:drop-shadow(0 2px 3px rgba(0,0,0,.34))}
+.brand-chart .line,.brand-chart .tip{fill:none;stroke:#ff5f68;stroke-width:4;
+  stroke-linecap:round;stroke-linejoin:round}
+.brand-copy{min-width:0}
 .brand{font-size:20px;font-weight:800;letter-spacing:1.5px}
 .brand-sub{font-size:10.5px;letter-spacing:1.1px;color:#9fb3d1;margin-top:1px}
 .meta{font-size:11.5px;color:#c6d6ec;position:relative;z-index:1;text-align:right;line-height:1.7}
@@ -160,15 +166,43 @@ select,input[type=date]{border:1px solid var(--border);border-radius:9px;backgro
 .progress i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
 .case-list{display:flex;flex-direction:column;gap:12px}
 .case{border:1px solid var(--border);border-radius:14px;background:var(--card);box-shadow:var(--shadow);overflow:hidden}
-.case-head{display:flex;justify-content:space-between;align-items:center;gap:10px;
-  padding:11px 14px;background:var(--soft);flex-wrap:wrap}
+.case-head{display:block;padding:11px 14px;background:var(--soft)}
 .case-head .h-left{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
 .case-date{font-weight:800;font-size:14px;font-variant-numeric:tabular-nums}
+.case-head-meta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:5px}
 .case-body{display:grid;grid-template-columns:1.1fr 1.4fr 1.5fr;gap:14px;padding:12px 14px}
 .case-col .lbl{font-size:10px;letter-spacing:1px;color:var(--muted);font-weight:700;margin-bottom:5px}
 .case-col .txt{font-size:12px;line-height:1.65}
+.case-main{padding:12px 14px}
+.case-title{font-size:14px;font-weight:800;line-height:1.5}
+.case-lede{font-size:12.5px;line-height:1.75;margin:5px 0 10px}
+.case-table-wrap{border:1px solid var(--border);border-radius:10px;overflow-x:auto;background:var(--card);
+  -webkit-overflow-scrolling:touch;touch-action:pan-x pan-y}
+.case-table{width:100%;min-width:610px;border-collapse:collapse;font-size:11.5px}
+.case-table th{padding:7px 9px;text-align:left;color:var(--muted);font-size:10.5px;font-weight:600;
+  background:var(--soft);border-bottom:1px solid var(--border);white-space:nowrap}
+.case-table td{padding:8px 9px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.55}
+.case-table tr:last-child td{border-bottom:0}
+.case-table .stock-cell{min-width:150px}
+.case-stock-btn{padding:0;border:0;background:transparent;color:var(--fg);font-weight:750;text-align:left}
+.case-stock-btn:hover{color:var(--accent)}
+.case-stock-theme{display:block;color:var(--accent2);font-size:10px;margin-top:1px}
+.case-height{font-weight:750;color:var(--up);white-space:nowrap}
+.case-break-date{white-space:nowrap;font-variant-numeric:tabular-nums}
+.case-performance{min-width:180px}
+.case-conclusion{display:flex;align-items:flex-start;gap:8px;margin-top:10px;padding:8px 10px;
+  border:1px solid rgba(36,107,253,.18);border-radius:9px;background:rgba(36,107,253,.055);
+  font-size:11.5px;line-height:1.65}
+.case-conclusion b{color:var(--accent);flex:0 0 auto}
+.case-research{margin-top:8px;font-size:11px;line-height:1.65;color:var(--muted)}
+.case-node-box{margin-top:10px;padding-top:9px;border-top:1px dashed var(--border);font-size:11px}
+.case-node-box .chips{margin-top:5px}
+.case-node-box .chip{padding:3px 7px;font-size:10.5px}
 .case-foot{display:flex;gap:7px;padding:0 14px 12px;flex-wrap:wrap}
 .case-foot button{padding:5px 10px;font-size:11.5px}
+.case-source{display:inline-flex;align-items:center;padding:5px 10px;border:1px solid var(--border);
+  border-radius:8px;background:var(--soft);color:var(--muted);font-size:11px;text-decoration:none}
+.case-source:hover{border-color:var(--accent);color:var(--accent)}
 .node-group{font-size:11px;margin-bottom:4px}
 .node-group .k{display:inline-block;min-width:34px}
 .filters{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
@@ -206,6 +240,28 @@ select,input[type=date]{border:1px solid var(--border);border-radius:9px;backgro
 .foot{margin-top:26px;font-size:10.5px;color:var(--muted);line-height:1.8;text-align:center}
 .hl{background:linear-gradient(transparent 62%,rgba(36,107,253,.16) 0)}
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+/* 与天天板统一：卡片、表格和按钮密度 */
+.panel{padding:10px;border-radius:13px}
+.dist{gap:7px}
+.dist-item{min-height:68px;padding:7px 9px;border-radius:10px;display:flex;flex-direction:column;justify-content:center}
+.dist-item b{font-size:18px}
+.stat-strip{gap:7px}
+.stat-strip .card{min-height:74px;padding:8px 10px}
+.stock-card{padding:7px;border-radius:10px}
+.tier-col{padding:9px;border-radius:12px}
+.case{border-radius:13px}
+.case-head{padding:9px 12px}
+.case-body{padding:10px 12px;gap:11px}
+button{border-radius:8px;transition:background .15s ease,border-color .15s ease,transform .12s ease}
+button:active:not(:disabled){transform:scale(.975)}
+button,.chip,.stock-card,.tabs button{touch-action:manipulation}
+.tabs::-webkit-scrollbar{display:none}
+@media(max-width:640px){
+  .dist{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stat-strip{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mark{width:40px;height:40px;border-radius:12px}
+  .brand-chart{width:28px;height:28px}
+}
 @media (max-width:1100px){
   .tier-grid{display:flex;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x mandatory}
   .tier-col{flex:0 0 300px;scroll-snap-align:start}
@@ -243,10 +299,15 @@ select,input[type=date]{border:1px solid var(--border);border-radius:9px;backgro
 <div class="wrap">
 <header>
   <div class="lockup">
-    <div class="mark">连</div>
-    <div>
-      <div class="brand">连板统计 · 梯队复盘</div>
-      <div class="brand-sub">LIMIT-UP LIFECYCLE · 断板节点学习台</div>
+    <div class="mark" aria-hidden="true">
+      <svg class="brand-chart" viewBox="0 0 32 32">
+        <path class="line" d="M4 24 L10.5 17.5 L15.5 20.5 L27 8"></path>
+        <path class="tip" d="M21 8 H27 V14"></path>
+      </svg>
+    </div>
+    <div class="brand-copy">
+      <div class="brand">天天板</div>
+      <div class="brand-sub">连板统计 · 梯队日线 · 节点复盘</div>
     </div>
   </div>
   <div class="header-right">
@@ -348,7 +409,7 @@ select,input[type=date]{border:1px solid var(--border);border-radius:9px;backgro
     <ol>
       <li>只拿 <b>5板及以上、且是当天市场最高板</b> 的高标龙头当锚，普通3、4板断板不算节点。</li>
       <li>龙头最后一天涨停后的第一天没有继续涨停＝<b>首阴断板</b>，节点开始。</li>
-      <li>看断板当天市场上的 <b>3板及以上中位票</b>，是否在随后 <b>3个交易日内</b> 批量断板＝<b>中位出清</b>。</li>
+      <li>看龙头最后涨停日仍在场的 <b>3板及以上中位票</b>，是否在随后 <b>3个交易日内</b> 批量断板＝<b>中位出清</b>。</li>
       <li>断板当天、次日、第3日出现的 <b>2板</b> 是补涨节点票；第4日及以后出现的2板属于新周期节点。</li>
       <li>次日龙头反包＝退潮延后；反包失败＋中位出清＝旧周期结束，资金寻找新节点。</li>
     </ol>
@@ -363,11 +424,12 @@ select,input[type=date]{border:1px solid var(--border);border-radius:9px;backgro
     <button type="button" data-f="big">龙头≥8板</button>
   </div>
   <div class="note" style="margin-bottom:12px">
-    案例由连板历史自动识别：龙头＝最高连板≥5板、断板当天是市场最高板；中位＝断板日仍在场的3板及以上个股；
+    案例由连板历史自动识别：龙头＝最高连板≥5板、断板当天是市场最高板；中位＝龙头最后涨停日仍在场的3板及以上个股；
     若有中位票后来突破前龙头高度，标为<b>节点转移</b>（按手册，它自己的断板才是新节点）。
     <b>题材和涨停原因已按开盘啦重标</b>：每个连板段取该股最后涨停日所属的题材组，没有覆盖时退回原行业。
-    「节点」列只统计<b>之后晋级到3板+的2板</b>（本数据集没有未晋级的2板，不能当作2进3胜率）。
-    点击任何个股可直接看日线，点「看当天梯队」跳到对应日期的对齐图。
+    案例标题日期＝龙头最后涨停日，表格里的「实际断板日期」＝下一个未涨停交易日。
+    节点窗口只统计<b>之后晋级到3板+的2板</b>，不能当作2进3胜率。
+    每张案例底部可直接核对当日数据来源：<a href="https://www.dabanke.com/" target="_blank" rel="noopener noreferrer">打板客网</a>。
   </div>
   <div class="case-list" id="caseList"></div>
 </section>
@@ -405,7 +467,7 @@ select,input[type=date]{border:1px solid var(--border);border-radius:9px;backgro
     <h3>几个定义</h3>
     <ul class="k" style="font-size:12px;line-height:1.9">
       <li><b>断板日</b>＝最后涨停日的下一个交易日（该股当天没有继续涨停）。</li>
-      <li><b>中位</b>＝断板日当天仍在场的 3板及以上个股（不含当天的其他高标龙头）。</li>
+      <li><b>中位</b>＝龙头最后涨停日仍在场的 3板及以上个股（不含当天的其他高标龙头）。</li>
       <li><b>中位出清</b>＝这批中位股全部在断板后 3 个交易日内停止涨停（即最后涨停日 ≤ 断板日 + 3）。</li>
       <li><b>节点票</b>＝断板日、D+1、D+2 当天处于 2板的个股；本数据只保留后来晋级 3板+ 的样本。</li>
       <li><b>反包</b>＝龙头断板后 1～3 个交易日内再次涨停。</li>
@@ -427,7 +489,7 @@ select,input[type=date]{border:1px solid var(--border);border-radius:9px;backgro
 </section>
 
 <div class="foot">
-  数据区间 <span id="footRange">—</span> · 连板统计抽取自「天天板」index.html · 本工具仅供复盘学习，不构成投资建议
+  数据区间 <span id="footRange">—</span> · 天天板 · 连板统计与节点复盘 · 本工具仅供复盘学习，不构成投资建议
 </div>
 
 <div id="modal" hidden>
@@ -466,6 +528,7 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&a
 const pad2 = n => String(n).padStart(2, '0');
 const fmtMD = d => (d ? d.slice(5).replace('-', '/') : '—');
 const fmtMD2 = d => (d ? d.slice(2).replace('-', '/') : '—');
+const fmtCN = d => (d ? (+d.slice(5, 7)) + '月' + (+d.slice(8, 10)) + '日' : '—');
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 const DAYS = HIST.dates;
@@ -618,7 +681,8 @@ function computeCases() {
       if (!leaderSyms.has(c.run.sym)) otherMax = Math.max(otherMax, c.lb);
     });
     if (otherMax >= lead.lb) return;
-    const mids = activeAt(bi, 3).filter(c => !leaderSyms.has(c.run.sym));
+    // 中位梯队按龙头最后涨停日统计；bi 是次日实际断板日。
+    const mids = activeAt(lead.ei, 3).filter(c => !leaderSyms.has(c.run.sym));
     const midItems = mids.map(c => {
       const br = c.run.ei + 1;
       return {
@@ -685,11 +749,14 @@ const state = {
   expand: true,
   updating: false,
   kl: new Map(),
+  klFocus: new Map(),
   klErr: new Set(),
   loading: new Set(),
   caseFilter: 'all',
-  modal: { list: [], idx: -1, sym: null, bars: null, range: 150 },
+  modal: { list: [], idx: -1, sym: null, bars: null, range: 150, focusDate: null },
 };
+let DABANKE = { days: {} };
+const DABANKE_CACHE_KEY = 'dabankeReviewDataV1';
 let CAL = DAYS.slice();
 let CAL_SET = new Set(DAYS);
 let calDirty = false;
@@ -765,7 +832,7 @@ function renderBoard(scrollToDate) {
     return Math.max(compact ? 92 : 104, Math.min(700, maxCount * (compact ? 50 : 46) + 16));
   });
   const W = 52 + dayWidths.reduce((a, b) => a + b, 0);
-  const H = compact ? 430 : 370, ml = 40, mr = 12, mt = 20, mb = 50;
+  const H = compact ? 350 : 315, ml = 40, mr = 12, mt = 20, mb = 50;
   const ih = H - mt - mb;
   const dayStarts = [];
   let cur = ml;
@@ -925,7 +992,7 @@ function renderSelected() {
   }).join('');
   $('#selTiers').innerHTML = rows || '<div class="k" style="padding:8px 0">当天没有3板及以上的连板股。</div>';
   $('#selTiers').querySelectorAll('.chip').forEach(el => {
-    el.addEventListener('click', () => openStock(el.dataset.sym));
+    el.addEventListener('click', () => openStock(el.dataset.sym, null, state.date));
   });
   const hit = CASES.filter(c => c.breakDate === state.date);
   const btn = $('#caseJump');
@@ -1012,15 +1079,15 @@ function renderTier() {
   $('#tierGrid').querySelectorAll('.stock-card').forEach(el => {
     el.addEventListener('click', ev => {
       if (ev.target.closest('.mini')) return;
-      openStock(el.dataset.sym, tierSyms());
+      openStock(el.dataset.sym, tierSyms(), state.date);
     });
   });
   const syms = tierSyms();
   syms.forEach(sym => {
     const box = $('#tierGrid .mini[data-sym="' + sym + '"]');
     if (!box) return;
-    box.addEventListener('click', e => { e.stopPropagation(); openStock(sym, syms); });
-    if (state.kl.has(sym)) { ensureCal(); drawMini(sym, box); }
+    box.addEventListener('click', e => { e.stopPropagation(); openStock(sym, syms, state.date); });
+    if (state.kl.has(sym) && state.klFocus.get(sym) === state.date) { ensureCal(); drawMini(sym, box); }
     else if (state.klErr.has(sym)) box.innerHTML = '<div class="ph">日线加载失败</div>';
     else box.innerHTML = '<div class="ph">待加载…</div>';
   });
@@ -1047,13 +1114,17 @@ function syncDateSelect(force) {
 
 /* ---------------- 日线加载 ---------------- */
 const KL_HOSTS = [
-  'https://proxy.finance.qq.com/ifzqgtimg/appstock/app/newfqkline/get?param=%s,day,,,%d,qfq',
-  'https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=%s,day,,,%d',
-  'https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=%s,day,,,%d,qfq',
+  'https://proxy.finance.qq.com/ifzqgtimg/appstock/app/newfqkline/get?param=%s,day,%a,%b,%d,qfq',
+  'https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=%s,day,%a,%b,%d',
+  'https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=%s,day,%a,%b,%d,qfq',
 ];
-function jsonpKline(sym, days) {
-  days = days || 160;
-  const hosts = KL_HOSTS.map(h => h.replace('%s', sym).replace('%d', days));
+function jsonpKline(sym, days, start, end) {
+  days = days || 120;
+  const hosts = KL_HOSTS.map(h => h
+    .replace('%s', sym)
+    .replace('%a', start || '')
+    .replace('%b', end || '')
+    .replace('%d', days));
   return new Promise((resolve, reject) => {
     let idx = 0;
     const next = () => {
@@ -1085,17 +1156,28 @@ function jsonpKline(sym, days) {
     next();
   });
 }
-function lsGet(sym) {
+const KL_CACHE_PREFIX = 'lbktjRangeV1:';
+function lsGet(sym, focusDate) {
   try {
-    const raw = localStorage.getItem('lbkl3:' + sym);
+    const raw = localStorage.getItem(KL_CACHE_PREFIX + sym);
     if (!raw) return null;
     const o = JSON.parse(raw);
-    if (!o || !o.b || Date.now() - o.t > 7 * 864e5) return null;
+    if (!o || !o.b || Date.now() - o.t > 7 * 864e5 || (focusDate && o.d !== focusDate)) return null;
     return o.b;
   } catch (e) { return null; }
 }
-function lsPut(sym, bars) {
-  try { localStorage.setItem('lbkl3:' + sym, JSON.stringify({ t: Date.now(), b: bars })); } catch (e) { /* quota */ }
+function lsPut(sym, bars, focusDate) {
+  try { localStorage.setItem(KL_CACHE_PREFIX + sym, JSON.stringify({ t: Date.now(), d: focusDate, b: bars })); } catch (e) { /* quota */ }
+}
+function shiftDate(dateStr, delta) {
+  const d = new Date(dateStr + 'T12:00:00');
+  if (isNaN(d.getTime())) return dateStr;
+  d.setDate(d.getDate() + delta);
+  return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+}
+function klineRangeForDate(focusDate) {
+  const anchor = /^\d{4}-\d{2}-\d{2}$/.test(focusDate || '') ? focusDate : DAYS[N - 1];
+  return { anchor, start: shiftDate(anchor, -55), end: shiftDate(anchor, 55) };
 }
 const klPromises = new Map();
 let klFailStreak = 0, klOk = 0;
@@ -1142,19 +1224,24 @@ function mockKline(sym) {
   });
   return bars;
 }
-function ensureKline(sym, force) {
+function ensureKline(sym, force, focusDate) {
+  const range = klineRangeForDate(focusDate || state.date);
+  const anchor = range.anchor;
+  const promiseKey = sym + '|' + anchor;
   if (!force) {
-    if (state.kl.has(sym)) return Promise.resolve(state.kl.get(sym));
-    if (klPromises.has(sym)) return klPromises.get(sym);
+    if (state.kl.has(sym) && state.klFocus.get(sym) === anchor) return Promise.resolve(state.kl.get(sym));
+    if (klPromises.has(promiseKey)) return klPromises.get(promiseKey);
     if (MOCK) {
       const bars = mockKline(sym);
       state.kl.set(sym, bars);
+      state.klFocus.set(sym, anchor);
       bars.forEach(b => addCal(b[0]));
       return Promise.resolve(bars);
     }
-    const cached = lsGet(sym);
+    const cached = lsGet(sym, anchor);
     if (cached && cached.length) {
       state.kl.set(sym, cached);
+      state.klFocus.set(sym, anchor);
       cached.forEach(b => addCal(b[0]));
       return Promise.resolve(cached);
     }
@@ -1163,24 +1250,27 @@ function ensureKline(sym, force) {
       return Promise.reject(new Error('当前离线'));
     }
   } else {
-    try { localStorage.removeItem('lbkl3:' + sym); } catch (e) { }
+    try { localStorage.removeItem(KL_CACHE_PREFIX + sym); } catch (e) { }
+    state.kl.delete(sym);
+    state.klFocus.delete(sym);
   }
-  const p = jsonpKline(sym).then(bars => {
+  const p = jsonpKline(sym, 120, range.start, range.end).then(bars => {
     state.kl.set(sym, bars);
+    state.klFocus.set(sym, anchor);
     bars.forEach(b => addCal(b[0]));
-    lsPut(sym, bars);
+    lsPut(sym, bars, anchor);
     state.klErr.delete(sym);
-    klPromises.delete(sym);
+    klPromises.delete(promiseKey);
     klFailStreak = 0;
     klOk++;
     return bars;
   }).catch(e => {
     state.klErr.add(sym);
-    klPromises.delete(sym);
+    klPromises.delete(promiseKey);
     klFailStreak++;
     throw e;
   });
-  if (!force) klPromises.set(sym, p);
+  if (!force) klPromises.set(promiseKey, p);
   return p;
 }
 
@@ -1189,24 +1279,27 @@ const klQueue = [];
 let klActive = 0;
 const KL_CONC = 6;
 
-function queueKline(sym, onDone, force) {
+function queueKline(sym, onDone, force, focusDate) {
+  focusDate = focusDate || state.date;
+  const promiseKey = sym + '|' + focusDate;
+  if (state.klFocus.get(sym) !== focusDate) state.klErr.delete(sym);
   if (!force) {
-    if (state.kl.has(sym)) { if (onDone) onDone(); return; }
+    if (state.kl.has(sym) && state.klFocus.get(sym) === focusDate) { if (onDone) onDone(); return; }
     if (state.klErr.has(sym)) { if (onDone) onDone(); return; }
-    if (klPromises.has(sym)) {
-      klPromises.get(sym).then(() => onDone && onDone()).catch(() => onDone && onDone());
+    if (klPromises.has(promiseKey)) {
+      klPromises.get(promiseKey).then(() => onDone && onDone()).catch(() => onDone && onDone());
       return;
     }
-    if (klQueue.some(j => j.sym === sym)) return;
+    if (klQueue.some(j => j.sym === sym && j.focusDate === focusDate)) return;
   }
-  klQueue.push({ sym, onDone, force: !!force });
+  klQueue.push({ sym, onDone, force: !!force, focusDate });
   pumpKline();
 }
 
 function pumpKline() {
   while (klActive < KL_CONC && klQueue.length) {
     const job = klQueue.shift();
-    if (!job.force && state.kl.has(job.sym)) { if (job.onDone) job.onDone(); continue; }
+    if (!job.force && state.kl.has(job.sym) && state.klFocus.get(job.sym) === job.focusDate) { if (job.onDone) job.onDone(); continue; }
     if (!job.force && state.klErr.has(job.sym)) { if (job.onDone) job.onDone(); continue; }
     if (klFailStreak >= 8 && klOk === 0) {
       state.klErr.add(job.sym);
@@ -1214,7 +1307,7 @@ function pumpKline() {
       continue;
     }
     klActive++;
-    ensureKline(job.sym, job.force).catch(() => { }).then(() => {
+    ensureKline(job.sym, job.force, job.focusDate).catch(() => { }).then(() => {
       klActive--;
       try { if (job.onDone) job.onDone(); } catch (e) { }
       pumpKline();
@@ -1225,7 +1318,7 @@ function pumpKline() {
 
 function markLoading(sym) {
   const box = $('#tierGrid .mini[data-sym="' + sym + '"]');
-  if (box && !state.kl.has(sym)) {
+  if (box && (!state.kl.has(sym) || state.klFocus.get(sym) !== state.date)) {
     box.innerHTML = '<div class="ph">加载中…</div>';
   }
 }
@@ -1233,7 +1326,7 @@ function markLoading(sym) {
 function drawMiniFor(sym) {
   const box = $('#tierGrid .mini[data-sym="' + sym + '"]');
   if (!box) { updateKlProgress(); return; }
-  if (state.kl.has(sym)) {
+  if (state.kl.has(sym) && state.klFocus.get(sym) === state.date) {
     ensureCal();
     drawMini(sym, box);
   } else if (state.klErr.has(sym)) {
@@ -1245,7 +1338,7 @@ function drawMiniFor(sym) {
 function updateKlProgress() {
   if (state.view !== 'tier') return;
   const syms = tierSyms();
-  const loaded = syms.filter(s => state.kl.has(s)).length;
+  const loaded = syms.filter(s => state.kl.has(s) && state.klFocus.get(s) === state.date).length;
   const err = syms.filter(s => state.klErr.has(s)).length;
   const pending = klActive + klQueue.length;
   const label = $('#klProgress');
@@ -1262,9 +1355,9 @@ function loadTierKlines(force) {
   if (state.view !== 'tier') return;
   const syms = tierSyms();
   syms.forEach(sym => {
-    if (force) { state.kl.delete(sym); state.klErr.delete(sym); }
+    if (force) { state.kl.delete(sym); state.klFocus.delete(sym); state.klErr.delete(sym); }
     markLoading(sym);
-    queueKline(sym, () => drawMiniFor(sym), force);
+    queueKline(sym, () => drawMiniFor(sym), force, state.date);
   });
   updateKlProgress();
 }
@@ -1273,7 +1366,7 @@ let tierIO = null;
 function observeTierMinis() {
   if (tierIO) tierIO.disconnect();
   if (!('IntersectionObserver' in window)) {
-    tierSyms().forEach(sym => queueKline(sym, () => drawMiniFor(sym)));
+    tierSyms().forEach(sym => queueKline(sym, () => drawMiniFor(sym), false, state.date));
     return;
   }
   if (!tierIO) {
@@ -1284,14 +1377,14 @@ function observeTierMinis() {
         const sym = el.dataset.sym;
         if (!sym) return;
         tierIO.unobserve(el);
-        if (state.kl.has(sym) || state.klErr.has(sym)) return;
+        if ((state.kl.has(sym) && state.klFocus.get(sym) === state.date) || state.klErr.has(sym)) return;
         markLoading(sym);
-        queueKline(sym, () => drawMiniFor(sym));
+        queueKline(sym, () => drawMiniFor(sym), false, state.date);
       });
     }, { rootMargin: '320px 0px' });
   }
   $$('#tierGrid .mini').forEach(el => {
-    if (!state.kl.has(el.dataset.sym) && !state.klErr.has(el.dataset.sym)) tierIO.observe(el);
+    if ((!state.kl.has(el.dataset.sym) || state.klFocus.get(el.dataset.sym) !== state.date) && !state.klErr.has(el.dataset.sym)) tierIO.observe(el);
   });
 }
 
@@ -1365,22 +1458,26 @@ function drawMini(sym, box) {
 }
 
 /* ---------------- 个股大图 ---------------- */
-async function openStock(sym, list) {
+async function openStock(sym, list, focusDate) {
   if (!sym) return;
+  focusDate = focusDate || state.date;
   if (list && list.length) state.modal.list = list.slice();
   else if (state.modal.list.indexOf(sym) < 0) state.modal.list = [sym];
   if (state.modal.list.indexOf(sym) < 0) state.modal.list.push(sym);
   state.modal.sym = sym;
   state.modal.idx = state.modal.list.indexOf(sym);
+  state.modal.focusDate = focusDate;
   const modal = $('#modal');
   modal.hidden = false;
   const r = RUNS_BY_SYM[sym] || [];
   const name = r.length ? r[0].name : sym;
   $('#mTitle').textContent = name + ' ' + sym.slice(2);
-  const cur = r.filter(x => x.ei >= DAY_IDX[state.date]).sort((a, b) => a.ei - b.ei)[0] || r[r.length - 1] || null;
+  const focusIdx = DAY_IDX[focusDate];
+  const cur = r.filter(x => x.ei >= focusIdx).sort((a, b) => a.ei - b.ei)[0] || r[r.length - 1] || null;
   const runsText = r.map(x => x.lb + '板 ' + fmtMD(x.start) + '~' + fmtMD(x.end)).join(' / ');
   $('#mSub').innerHTML = (cur ? '<span class="kpl-t">题材：' + esc(themeText(cur)) + '</span> · 行业：' +
-    esc(cur.theme || '—') : '') + (runsText ? ' · ' + esc(runsText) : '');
+    esc(cur.theme || '—') : '') + (runsText ? ' · ' + esc(runsText) : '') +
+    ' · <span class="k">日线定位 ' + esc(focusDate) + ' 前后各约30个交易日</span>';
   $('#mSub').title = cur ? themeTitle(cur) : '';
   $('#mPos').textContent = (state.modal.idx + 1) + ' / ' + state.modal.list.length;
   $('#mPrev').disabled = state.modal.idx <= 0;
@@ -1388,7 +1485,7 @@ async function openStock(sym, list) {
   $('#mChart').innerHTML = '<text x="450" y="190" text-anchor="middle" fill="var(--muted)" font-size="13">正在取日线…</text>';
   $('#mOhlc').textContent = '正在取日线…';
   try {
-    const bars = await ensureKline(sym);
+    const bars = await ensureKline(sym, false, focusDate);
     if (state.modal.sym !== sym) return;
     state.modal.bars = bars;
     ensureCal();
@@ -1402,13 +1499,31 @@ function closeModal() {
   $('#modal').hidden = true;
   state.modal.sym = null;
   state.modal.bars = null;
+  state.modal.focusDate = null;
+}
+function focusWindow(bars, focusDate, before, after) {
+  before = before == null ? 30 : before;
+  after = after == null ? 30 : after;
+  let idx = bars.findIndex(b => b[0] === focusDate);
+  if (idx < 0) {
+    for (let i = 0; i < bars.length; i++) {
+      if (bars[i][0] <= focusDate) idx = i;
+      else break;
+    }
+  }
+  if (idx < 0) idx = 0;
+  const start = Math.max(0, idx - before);
+  const end = Math.min(bars.length, idx + after + 1);
+  return { data: bars.slice(start, end), selIdx: idx - start, actualDate: bars[idx] ? bars[idx][0] : focusDate };
 }
 function renderBig() {
   const bars = state.modal.bars;
   if (!bars || !bars.length) return;
   const W = 900, H = 380, ml = 8, mr = 54, mt = 12, mb = 26, volH = 58;
   const priceH = H - mt - mb - volH - 8;
-  const data = bars.slice(-state.modal.range);
+  const focus = focusWindow(bars, state.modal.focusDate || state.date, 30, 30);
+  const data = focus.data;
+  const selIdx = focus.selIdx;
   const n = data.length;
   const bw = (W - ml - mr) / n;
   let lo = Infinity, hi = -Infinity;
@@ -1455,10 +1570,10 @@ function renderBig() {
     }
     if (d) svg += '<path d="' + d + '" fill="none" stroke="' + m.color + '" stroke-width="1" opacity=".85"/>';
   });
-  const selIdx = data.findIndex(b => b[0] === state.date || (b[0] <= state.date && false));
   if (selIdx >= 0) {
     const x = ml + (selIdx + 0.5) * bw;
     svg += '<line x1="' + x.toFixed(1) + '" x2="' + x.toFixed(1) + '" y1="' + mt + '" y2="' + (H - mb) + '" stroke="var(--accent)" stroke-width=".9" stroke-dasharray="4 3" opacity=".7"/>';
+    svg += '<text x="' + x.toFixed(1) + '" y="' + (mt - 2) + '" text-anchor="middle" font-size="8.5" font-weight="700" fill="var(--accent)">' + esc(focus.actualDate) + '</text>';
   }
   const tick = Math.max(1, Math.floor(n / 6));
   for (let i = 0; i < n; i += tick) {
@@ -1469,9 +1584,9 @@ function renderBig() {
   $('#mMa').innerHTML = [['var(--ma5)', 'MA5'], ['var(--ma10)', 'MA10'], ['var(--ma20)', 'MA20']].map(x =>
     '<span><i style="background:' + x[0] + '"></i>' + x[1] + '</span>').join('') +
     '<span style="margin-left:auto">前复权 · 最近' + n + '根</span>';
-  const last = data[n - 1];
-  $('#mOhlc').textContent = last[0] + ' 开' + last[1].toFixed(2) + ' 收' + last[2].toFixed(2) +
-    ' 高' + last[3].toFixed(2) + ' 低' + last[4].toFixed(2) + ' 量' + (last[5] / 1e4).toFixed(1) + '万手';
+  const active = data[selIdx] || data[n - 1];
+  $('#mOhlc').textContent = '定位 ' + active[0] + ' 开' + active[1].toFixed(2) + ' 收' + active[2].toFixed(2) +
+    ' 高' + active[3].toFixed(2) + ' 低' + active[4].toFixed(2) + ' 量' + (active[5] / 1e4).toFixed(1) + '万手';
   const svgEl = $('#mChart');
   svgEl.onmousemove = ev => {
     const rect = svgEl.getBoundingClientRect();
@@ -1498,6 +1613,31 @@ function renderBig() {
     if (old) old.remove();
     $('#mTip').style.display = 'none';
   };
+}
+
+/* ---------------- 打板客盘后数据 ---------------- */
+function toDabankeSymbol(sym) {
+  return /^(sh|sz|bj)\d{6}$/i.test(sym) ? sym.slice(2) + '.' + sym.slice(0, 2).toUpperCase() : sym;
+}
+function dabankeDay(date) {
+  return DABANKE && DABANKE.days ? DABANKE.days[date] || null : null;
+}
+async function loadDabankeData() {
+  try {
+    const cached = JSON.parse(localStorage.getItem(DABANKE_CACHE_KEY) || 'null');
+    if (cached && cached.days) DABANKE = cached;
+  } catch (e) { }
+  try {
+    const response = await fetch('dabanke_data.json?v=' + Date.now(), { cache: 'no-store' });
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    const value = await response.json();
+    if (!value || !value.days) throw new Error('数据格式不正确');
+    DABANKE = value;
+    try { localStorage.setItem(DABANKE_CACHE_KEY, JSON.stringify(value)); } catch (e) { }
+    if (state.view === 'cases') renderCases();
+  } catch (e) {
+    if (state.view === 'cases' && DABANKE && DABANKE.days) renderCases();
+  }
 }
 
 /* ---------------- 案例 ---------------- */
@@ -1541,7 +1681,7 @@ function renderCases() {
         syncDateSelect();
         switchView('tier');
       } else if (act === 'stock') {
-        openStock(btn.dataset.sym, btn.dataset.list ? btn.dataset.list.split(',') : null);
+        openStock(btn.dataset.sym, btn.dataset.list ? btn.dataset.list.split(',') : null, btn.dataset.focus || state.date);
       }
     });
   });
@@ -1549,68 +1689,132 @@ function renderCases() {
     el.addEventListener('click', () => {
       const card = el.closest('.case');
       const syms = card ? Array.from(card.querySelectorAll('.chip')).map(x => x.dataset.sym) : null;
-      openStock(el.dataset.sym, syms);
+      openStock(el.dataset.sym, syms, el.dataset.focus || state.date);
     });
   });
 }
+function maxBoardOnDate(date) {
+  const i = DAY_IDX[date];
+  if (i === undefined) return 0;
+  let max = 0;
+  groupDay(i, 1).forEach((list, lb) => { if (list.length) max = Math.max(max, lb); });
+  return max;
+}
+function dabankeDayUrl(date) {
+  return 'https://www.dabanke.com/index-' + String(date || '').replace(/-/g, '') + '.html';
+}
 function caseHTML(c) {
   const l = c.leader;
-  const cleared = c.cleared3;
+  const sourceDay = dabankeDay(c.breakDate);
+  const sourceLimit = (sourceDay && sourceDay.market && sourceDay.market.limit) || {};
+  const sourceMarketNote = sourceDay && sourceDay.market ? sourceDay.market.note || '' : '';
+  const sourceHasStocks = !!(sourceDay && sourceDay.stocks && Object.keys(sourceDay.stocks).length);
+  const sourceDataBadge = sourceDay
+    ? (sourceHasStocks
+      ? '<span class="badge ok">打板客数据已接入</span>'
+      : '<span class="badge ok">打板客市场数据已接入</span>')
+    : '<span class="badge">打板客数据待同步</span>';
+  const caseNo = CASES.indexOf(c) + 1;
+  const kind = c.reversal.length ? '断板反包'
+    : (c.transfer.length ? '节点转移'
+      : (c.alive ? '中位仍在分歧'
+        : (c.cleared3 ? '中位快速出清' : '中位延迟出清')));
   const badge = c.reversal.length
     ? '<span class="badge bad">断板后反包 · 退潮延后</span>'
     : (c.transfer.length
-      ? '<span class="badge hi">节点转移 · ' + esc(c.transfer[0].name) + ' ' + c.transfer[0].lb + '板</span>'
+      ? '<span class="badge hi">中位突破前高 · 节点转移</span>'
       : (c.alive ? '<span class="badge hi">中位未出清 · 仍在进行中</span>'
-        : (cleared ? '<span class="badge ok">中位3日内出清 · D+' + c.clearOffset + '</span>'
-          : '<span class="badge hi">中位未在3日内出清 · 拖到 ' + fmtMD(c.clearDate) + '</span>')));
-  const midChips = c.mids.map(m => {
-    const ok = m.breakDate && m.offset <= 3 && !m.alive;
-    const lbTxt = (m.atBreak && m.lb > m.atBreak) ? m.atBreak + '→' + m.lb + '板' : (m.atBreak || m.lb) + '板';
-    return '<span class="chip" data-sym="' + m.sym + '" title="' + esc(stockTitle(m)) + '"><b>' + esc(m.name) + '</b>' +
-      '<small class="kpl-t">' + esc(stockThemeText(m)) + '</small><small>' + lbTxt + '</small>' +
-      '<span class="arw">→</span><small class="' + (ok ? 'up' : '') + '">' + (m.alive ? '进行中' : fmtMD(m.breakDate) + '断(D+' + m.offset + ')') + '</small></span>';
-  }).join('') || '<span class="k">断板日没有3板及以上中位票（高度断层）</span>';
-  const groups = [1, 2, 3].map(d => {
-    const di = DAY_IDX[c.breakDate] + d - 1;
-    const lbl = d === 1 ? '断板日' : 'D+' + (d - 1);
-    if (di >= N) return '<div class="node-group"><span class="k">' + lbl + '</span> <span class="k">数据未覆盖</span></div>';
-    const ns = c.nodes.filter(n => n.day === d);
-    if (!ns.length) return '<div class="node-group"><span class="k">' + lbl + '</span> <span class="k">当天无2板样本</span></div>';
-    const chips = ns.slice().sort((a, b) => b.lb_final - a.lb_final).map(n =>
-      '<span class="chip" data-sym="' + n.sym + '" title="' + esc(stockTitle(n)) + '"><b>' + esc(n.name) + '</b>' +
-      '<small class="kpl-t">' + esc(stockThemeText(n)) + '</small><small>2→' + n.lb_final + '板</small>' +
-      (n.uniq3 === 1 ? '<span class="badge hi" style="padding:0 5px;font-size:9px">唯一三板</span>' : '') + '</span>').join('');
-    return '<div class="node-group"><span class="k">' + lbl + '</span> ' + chips + '</div>';
+        : (c.cleared3 ? '<span class="badge ok">符合中位出清结构</span>'
+          : '<span class="badge hi">中位未在3日内出清</span>')));
+  const midNames = c.mids.map(m => esc(m.name) + (m.atBreak || m.lb) + '板');
+  const midSummary = midNames.length
+    ? midNames.slice(0, 6).join('、') + (midNames.length > 6 ? '等' + midNames.length + '只' : '')
+    : '高度断层，当天没有3板及以上中位票';
+  const dayMaxText = (sourceLimit['is-height'] && sourceLimit['is-height'].value) ||
+    (maxBoardOnDate(c.breakDate) + '板');
+  const fullSyms = Array.from(new Set(
+    [l.sym].concat(c.mids.map(m => m.sym)).concat(c.nodes.map(n => n.sym))
+  )).join(',');
+  const midRows = c.mids.slice().sort((a, b) => (b.atBreak || 0) - (a.atBreak || 0)).map(m => {
+    const at = m.atBreak || m.lb;
+    const actual = m.alive ? '仍在连板' : fmtCN(m.breakDate);
+    const live = sourceDay && sourceDay.stocks ? sourceDay.stocks[toDabankeSymbol(m.sym)] : null;
+    const performance = live
+      ? (live.status === 'success'
+        ? (live.ladder ? live.ladder + '成功' : (live.statusText || '封板')) +
+          (live.statusText ? '（' + live.statusText + '）' : '') +
+          (live.change ? '，' + live.change : '')
+        : (live.ladder || (at + '进' + (at + 1))) + '失败' + (live.change ? '，' + live.change : ''))
+      : (m.alive
+        ? '仍在' + at + '板'
+        : (m.lb > at ? '失去连板资格 · 本段最高' + m.lb + '板' : '第' + (at + 1) + '板失败'));
+    return '<tr>' +
+      '<td class="stock-cell"><button type="button" class="case-stock-btn" data-act="stock" data-sym="' + m.sym +
+      '" data-focus="' + c.breakDate + '" data-list="' + fullSyms + '">' + esc(m.name) + '</button>' +
+      '<span class="case-stock-theme">' + esc(stockThemeText(m)) + '</span></td>' +
+      '<td class="case-height">' + at + '板</td>' +
+      '<td class="case-break-date">' + actual + '</td>' +
+      '<td class="case-performance">' + performance + '</td>' +
+      '</tr>';
   }).join('');
+  const nodeChips = c.nodes.slice().sort((a, b) => b.lb_final - a.lb_final).slice(0, 10).map(n =>
+    '<span class="chip" data-sym="' + n.sym + '" data-focus="' + n.at + '" title="' + esc(stockTitle(n)) + '">' +
+    '<b>' + esc(n.name) + '</b><small>' + fmtCN(n.at) + ' · 2→' + n.lb_final + '板</small></span>'
+  ).join('');
   const best = c.nodes.slice().sort((a, b) => b.lb_final - a.lb_final)[0];
   const others = c.leaders.slice(1).map(x => x.name + x.lb + '板').join('、');
-  const lReason = stockReason(l), lTheme = stockTheme(l);
-  const reasonLine = (lReason && lReason !== lTheme)
-    ? '<br><span class="kpl-t">涨停原因：' + esc(lReason) + '</span>' : '';
+  const midOutcome = c.mids.length
+    ? (c.alive
+      ? '已有' + c.mids.filter(m => !m.alive).length + '只断板，仍有' + c.mids.filter(m => m.alive).length + '只保持连板'
+      : c.cleared3
+        ? (c.clearOffset === 0 ? '中位在龙头断板当天同步失去连板资格' : '中位在断板后' + c.clearOffset + '个交易日内全部出清')
+        : '中位直到' + fmtCN(c.clearDate) + '才全部出清')
+    : '断板日没有3板及以上中位票，梯队高度出现断层';
+  const reversalText = c.reversal.length
+    ? '龙头随后在' + c.reversal.map(r => fmtCN(r.date)).join('、') + '再次涨停，属于断板反包。'
+    : (c.transfer.length
+      ? esc(c.transfer[0].name) + '后来突破旧龙头高度至' + c.transfer[0].lb + '板，形成节点转移。'
+      : '');
+  const leaderLive = sourceDay && sourceDay.stocks ? sourceDay.stocks[toDabankeSymbol(l.sym)] : null;
+  const sourceMarketText = sourceDay
+    ? ('打板客当日：' + esc(sourceMarketNote || '市场概况已接入') +
+      (sourceLimit['is-sealed'] ? '；当日封板' + sourceLimit['is-sealed'].value +
+        '，' + esc(sourceLimit['is-sealed'].detail) : '') +
+      (leaderLive && leaderLive.change ? '；' + esc(l.name) + '当日' + leaderLive.change : '') + '。')
+    : '';
+  const conclusion = '高标断板 + ' + (c.cleared3 ? '中位快速出清' : (c.transfer.length ? '中位接力' : '中位未快速出清')) +
+    (c.reversal.length ? ' + 断板反包' : '');
+  const research = c.cleared3
+    ? '研究点：中位出清不要求指数继续下跌，也不要求跌停数量继续增加。关键是高标负反馈后，断板日、D+1、D+2是否出现新的2板节点。'
+    : (c.transfer.length
+      ? '研究点：旧龙头断板后，中位票若继续晋级并突破旧高度，要按节点转移重新跟踪，不能机械等待冰点。'
+      : '研究点：中位没有快速出清时，旧周期仍在释放分歧，应继续等出清或等待更高辨识度的新节点。');
   return '<article class="case" id="case-' + c.breakDate + '">' +
-    '<div class="case-head"><div class="h-left"><span class="case-date">' + c.breakDate + '</span>' +
-    '<b>' + esc(l.name) + '</b><span class="badge">' + l.lb + '板</span>' +
-    '<span class="k kpl-t" title="' + esc(stockTitle(l)) + '">' + esc(stockThemeText(l)) + '</span></div>' +
-    '<div>' + badge + '</div></div>' +
-    '<div class="case-body">' +
-    '<div class="case-col"><div class="lbl">A · 锚定龙头</div><div class="txt">首板 ' + fmtMD(l.start) + ' → 连板 ' + l.lb +
-    ' 板 → 最后涨停 ' + fmtMD(l.end) + '<br>断板日 <b>' + c.breakDate + '</b>' + reasonLine +
-    (others ? '<br><span class="k">同日其他高标：' + esc(others) + '</span>' : '') +
-    (c.reversal.length ? '<br><span class="up">反包：' + c.reversal.map(r => fmtMD(r.date) + ' 再涨停').join('、') + '</span>' : '') + '</div></div>' +
-    '<div class="case-col"><div class="lbl">B · 中位出清（断板日 3板+）</div><div class="chips">' + midChips + '</div>' +
-    '<div class="k" style="margin-top:5px">' + (c.mids.length
-      ? (c.alive
-        ? '已断板 ' + c.mids.filter(m => !m.alive).length + '/' + c.mids.length + ' 只，仍有 ' + c.mids.filter(m => m.alive).length + ' 只在连板'
-        : '最后一只断板：' + (c.clearDate || '—') + '（D+' + c.clearOffset + '）') +
-        (c.midRise ? ' · 其中 ' + c.midRise + ' 只断板后还继续晋级（最高' + c.midMax + '板）' : '') +
-        (c.transfer.length ? ' · <b style="color:var(--accent)">' + esc(c.transfer[0].name) + ' 突破前高（' + c.transfer[0].lb + '板）→ 节点转移</b>' : '')
-      : '') + '</div></div>' +
-    '<div class="case-col"><div class="lbl">C · 节点窗口（之后晋级3板+的2板）</div>' + groups + '</div>' +
+    '<div class="case-head">' +
+    '<div class="case-title">案例' + caseNo + '：' + fmtCN(l.end) + ' ' + esc(l.name) + '断板——' + kind + '</div>' +
+    '<div class="case-head-meta">' + badge + sourceDataBadge + '<span class="badge">' + l.lb + '板</span>' +
+    '<span class="k kpl-t" title="' + esc(stockTitle(l)) + '">' + esc(stockThemeText(l)) + '</span></div></div>' +
+    '<div class="case-main">' +
+    '<p class="case-lede">' + fmtCN(l.end) + '，' + esc(l.name) + Math.max(1, l.lb - 1) + '进' + l.lb +
+    '成功，收盘形成' + l.lb + '板；当天中位梯队为' + midSummary + '。' +
+    (others ? '同日其他高标还有' + esc(others) + '。' : '') + '</p>' +
+    '<div class="case-table-wrap"><table class="case-table"><thead><tr>' +
+    '<th>股票</th><th>断板日高度</th><th>实际断板日期</th><th>断板表现</th>' +
+    '</tr></thead><tbody>' + (midRows || '<tr><td colspan="4" class="k">断板日没有3板及以上中位票</td></tr>') +
+    '</tbody></table></div>' +
+    '<div class="case-conclusion"><b>结构判断</b><span>' + fmtCN(c.breakDate) + '，' + esc(l.name) + l.lb + '进' +
+    (l.lb + 1) + '失败并断板；' + midOutcome + '。断板日最高板为' + dayMaxText + '，前一日龙头为' + l.lb + '板。' +
+    reversalText + (sourceMarketText ? '<br>' + sourceMarketText : '') +
+    '<br><b>结论：</b>' + conclusion + '。</span></div>' +
+    '<div class="case-research">' + research + '</div>' +
+    (nodeChips ? '<div class="case-node-box"><span class="k">节点窗口：之后晋级到3板以上的2板</span>' +
+      '<div class="chips">' + nodeChips + '</div></div>' : '') +
     '</div>' +
     '<div class="case-foot">' +
     '<button type="button" data-act="tier" data-date="' + c.breakDate + '">看当天梯队日线 →</button>' +
-    '<button type="button" data-act="stock" data-sym="' + l.sym + '">龙头日线</button>' +
-    (best ? '<button type="button" data-act="stock" data-sym="' + best.sym + '">最强节点票 · ' + esc(best.name) + '</button>' : '') +
+    '<button type="button" data-act="stock" data-sym="' + l.sym + '" data-focus="' + c.breakDate + '" data-list="' + fullSyms + '">龙头日线</button>' +
+    (best ? '<button type="button" data-act="stock" data-sym="' + best.sym + '" data-focus="' + best.at + '" data-list="' + fullSyms + '">最强节点票 · ' + esc(best.name) + '</button>' : '') +
+    '<a class="case-source" href="' + dabankeDayUrl(c.breakDate) + '" target="_blank" rel="noopener noreferrer">数据来源 · 打板客网</a>' +
     '</div></article>';
 }
 function focusCase(date) {
@@ -1750,7 +1954,8 @@ function invalidateOldKlines() {
   state.kl.forEach((bars, sym) => {
     if (!bars.length || bars[bars.length - 1][0] < latest) {
       state.kl.delete(sym);
-      try { localStorage.removeItem('lbkl3:' + sym); } catch (e) { }
+      state.klFocus.delete(sym);
+      try { localStorage.removeItem(KL_CACHE_PREFIX + sym); } catch (e) { }
     }
   });
 }
@@ -1883,11 +2088,11 @@ function bind() {
   $('#modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
   $('#mPrev').addEventListener('click', () => {
     const m = state.modal;
-    if (m.idx > 0) openStock(m.list[m.idx - 1], m.list);
+    if (m.idx > 0) openStock(m.list[m.idx - 1], m.list, m.focusDate);
   });
   $('#mNext').addEventListener('click', () => {
     const m = state.modal;
-    if (m.idx < m.list.length - 1) openStock(m.list[m.idx + 1], m.list);
+    if (m.idx < m.list.length - 1) openStock(m.list[m.idx + 1], m.list, m.focusDate);
   });
   $$('#caseFilters button').forEach(b => {
     b.addEventListener('click', () => {
@@ -1947,9 +2152,10 @@ function init() {
   else if (v === 'cases') renderCases();
   else if (v === 'board') renderBoard(true);
   syncHash();
+  loadDabankeData();
   try {
     const qs = new URLSearchParams(location.search);
-    if (qs.get('stock')) setTimeout(() => openStock(qs.get('stock')), 120);
+    if (qs.get('stock')) setTimeout(() => openStock(qs.get('stock'), null, qs.get('date') || state.date), 120);
     if (qs.get('update') === '1') setTimeout(() => updateData(), 400);
     if (qs.get('sw') === '1' && 'serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').then(reg => {
