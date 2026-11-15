@@ -478,7 +478,7 @@ button,.chip,.stock-card,.tabs button{touch-action:manipulation}
     </ul>
     <h3>日线图</h3>
     <p class="k" style="font-size:12px;line-height:1.8;margin:0">
-      日线为腾讯前复权数据（<code>web.ifzq.gtimg.cn</code>），通过 <code>&lt;script&gt;</code> 方式加载，不需要服务器；
+      日线为腾讯不复权数据（<code>web.ifzq.gtimg.cn</code>），显示事件当天真实成交价格，通过 <code>&lt;script&gt;</code> 方式加载，不需要服务器；
       浏览器直接双击打开本文件即可。首次加载需要联网，之后缓存在 localStorage（约7天）。
       若某只票加载失败，卡片会显示「日线加载失败」，可点「重新加载」。
     </p>
@@ -1118,9 +1118,8 @@ function syncDateSelect(force) {
 
 /* ---------------- 日线加载 ---------------- */
 const KL_HOSTS = [
-  'https://proxy.finance.qq.com/ifzqgtimg/appstock/app/newfqkline/get?param=%s,day,%a,%b,%d,qfq',
+  'https://proxy.finance.qq.com/ifzqgtimg/appstock/app/kline/kline?param=%s,day,%a,%b,%d',
   'https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=%s,day,%a,%b,%d',
-  'https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=%s,day,%a,%b,%d,qfq',
 ];
 function jsonpKline(sym, days, start, end) {
   days = days || 120;
@@ -1149,7 +1148,7 @@ function jsonpKline(sym, days, start, end) {
       s.onload = () => {
         const j = window[varName];
         const d = j && j.data && j.data[sym];
-        const bars = d && (d.qfqday || d.day);
+        const bars = d && d.day;
         if (!bars || !bars.length) { fin(new Error('empty')); return; }
         fin(null, bars.map(b => [b[0], +b[1], +b[2], +b[3], +b[4], +b[5]]));
       };
@@ -1160,7 +1159,7 @@ function jsonpKline(sym, days, start, end) {
     next();
   });
 }
-const KL_CACHE_PREFIX = 'lbktjRangeV1:';
+const KL_CACHE_PREFIX = 'lbktjRangeRawV1:';
 function lsGet(sym, focusDate) {
   try {
     const raw = localStorage.getItem(KL_CACHE_PREFIX + sym);
@@ -1616,7 +1615,7 @@ function renderBig() {
   $('#mChart').innerHTML = svg;
   $('#mMa').innerHTML = [['var(--ma5)', 'MA5'], ['var(--ma10)', 'MA10'], ['var(--ma20)', 'MA20']].map(x =>
     '<span><i style="background:' + x[0] + '"></i>' + x[1] + '</span>').join('') +
-    '<span style="margin-left:auto">前复权 · 最近' + n + '根</span>';
+    '<span style="margin-left:auto">不复权 · 最近' + n + '根</span>';
   const active = data[selIdx] || data[n - 1];
   $('#mOhlc').textContent = '定位 ' + active[0] + ' 开' + active[1].toFixed(2) + ' 收' + active[2].toFixed(2) +
     ' 高' + active[3].toFixed(2) + ' 低' + active[4].toFixed(2) + ' 量' + (active[5] / 1e4).toFixed(1) + '万手';
