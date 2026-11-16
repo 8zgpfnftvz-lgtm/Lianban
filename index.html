@@ -123,6 +123,29 @@ section[hidden]{display:none!important}
 .chart-wrap::-webkit-scrollbar-thumb{background:var(--muted);border-radius:999px;opacity:.55}
 .chart-wrap svg{display:block;height:auto}
 .sel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:18px 0 8px;flex-wrap:wrap}
+.first-board-section{margin-top:20px;padding-top:15px;border-top:1px solid var(--border)}
+.first-board-head{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:7px}
+.first-board-head h3{margin:0}
+.first-board-note{font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:8px}
+.first-board-table-wrap{max-height:360px;overflow:auto;border:1px solid var(--border);border-radius:10px;
+  background:var(--card);overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.first-board-table{width:100%;min-width:780px;border-collapse:collapse;font-size:11.5px}
+.first-board-table th{position:sticky;top:0;z-index:1;padding:7px 8px;text-align:left;
+  background:var(--soft);border-bottom:1px solid var(--border);color:var(--muted);
+  font-size:10.5px;font-weight:600;white-space:nowrap}
+.first-board-table td{padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.55}
+.first-board-table tr:last-child td{border-bottom:0}
+.first-board-table .fb-stock-btn{padding:0;border:0;background:transparent;color:var(--fg);
+  font-weight:750;text-align:left;line-height:1.4}
+.first-board-table .fb-stock-btn:hover{color:var(--accent)}
+.first-board-table .fb-code{display:block;color:var(--muted);font-size:9.5px;margin-top:1px}
+.first-board-table .fb-theme{color:var(--accent2);white-space:nowrap}
+.first-board-table .fb-reason{min-width:230px;max-width:360px}
+.first-board-table .fb-status{display:inline-block;padding:2px 7px;border-radius:999px;font-size:10px;
+  white-space:nowrap;background:var(--soft);color:var(--muted)}
+.first-board-table .fb-status.ok{background:rgba(15,159,114,.12);color:var(--down)}
+.first-board-table .fb-status.bad{background:rgba(229,72,77,.12);color:var(--up)}
+.first-board-table .fb-num{white-space:nowrap;font-variant-numeric:tabular-nums}
 .tier-row{display:grid;grid-template-columns:64px 1fr;gap:10px;padding:9px 0;border-top:1px dashed var(--border);align-items:start}
 .tier-row:first-child{border-top:0}
 .tier-lb{font-weight:800;font-size:13px;padding-top:3px;color:var(--accent)}
@@ -291,6 +314,8 @@ button,.chip,.stock-card,.tabs button{touch-action:manipulation}
   .modal-card{padding:10px}
   .case-table-wrap{max-height:220px}
   .case-table th,.case-table td{padding:6px 8px}
+  .first-board-table-wrap{max-height:300px}
+  .first-board-table{min-width:730px}
   /* 手机上梯队改为纵向堆叠，避免横向滑四列 */
   .tier-grid{display:block;overflow:visible;padding-bottom:0}
   .tier-col{width:auto;margin-bottom:12px}
@@ -368,6 +393,19 @@ button,.chip,.stock-card,.tabs button{touch-action:manipulation}
       </div>
     </div>
     <div id="selTiers"></div>
+    <div class="first-board-section" id="firstBoardSection">
+      <div class="first-board-head">
+        <div>
+          <div class="kicker">FIRST BOARD</div>
+          <h3>首板统计</h3>
+        </div>
+        <span class="badge" id="firstBoardBadge">加载中…</span>
+      </div>
+      <div class="first-board-note" id="firstBoardNote">
+        首次触板股票按所选交易日统计；含封板、回封、炸板和未封住样本。
+      </div>
+      <div id="firstBoardTable"></div>
+    </div>
   </div>
 </section>
 
@@ -761,6 +799,10 @@ const state = {
 };
 let DABANKE = { days: {} };
 const DABANKE_CACHE_KEY = 'dabankeReviewDataV1';
+let FIRST_BOARDS = { days: {} };
+let firstBoardsPromise = null;
+let firstBoardRenderToken = 0;
+const STOCK_NAMES = {};
 let CAL = DAYS.slice();
 let CAL_SET = new Set(DAYS);
 let calDirty = false;
@@ -1008,6 +1050,7 @@ function renderSelected() {
     btn.hidden = true;
   }
   $('#toTier').onclick = () => { switchView('tier'); };
+  renderFirstBoards();
 }
 
 /* ---------------- 梯队日线复盘 ---------------- */
@@ -1494,7 +1537,7 @@ async function openStock(sym, list, focusDate) {
   const modal = $('#modal');
   modal.hidden = false;
   const r = RUNS_BY_SYM[sym] || [];
-  const name = r.length ? r[0].name : sym;
+  const name = r.length ? r[0].name : (STOCK_NAMES[sym] || sym);
   $('#mTitle').textContent = name + ' ' + sym.slice(2);
   const focusIdx = DAY_IDX[focusDate];
   const cur = r.filter(x => x.ei >= focusIdx).sort((a, b) => a.ei - b.ei)[0] || r[r.length - 1] || null;
@@ -1645,6 +1688,93 @@ function renderBig() {
     if (old) old.remove();
     $('#mTip').style.display = 'none';
   };
+}
+
+/* ---------------- 首板统计 ---------------- */
+function loadFirstBoardData() {
+  if (firstBoardsPromise) return firstBoardsPromise;
+  firstBoardsPromise = fetch('first_board_data.json?v=' + Date.now(), { cache: 'no-store' })
+    .then(response => {
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      return response.json();
+    })
+    .then(value => {
+      if (!value || !value.days) throw new Error('首板数据格式不正确');
+      FIRST_BOARDS = value;
+      Object.values(value.days).forEach(day => {
+        (day.stocks || []).forEach(stock => {
+          if (stock.name) STOCK_NAMES[stock.sym] = stock.name;
+        });
+      });
+      return value;
+    })
+    .catch(error => {
+      firstBoardsPromise = null;
+      throw error;
+    });
+  return firstBoardsPromise;
+}
+
+function renderFirstBoards() {
+  const date = state.date;
+  const token = ++firstBoardRenderToken;
+  const badge = $('#firstBoardBadge');
+  const note = $('#firstBoardNote');
+  const box = $('#firstBoardTable');
+  if (!badge || !note || !box) return;
+  badge.textContent = '加载中…';
+  note.textContent = date + ' 首板数据加载中…';
+  box.innerHTML = '<div class="k" style="padding:12px 2px">正在读取首板统计…</div>';
+  loadFirstBoardData().then(() => {
+    if (token !== firstBoardRenderToken || date !== state.date) return;
+    const day = FIRST_BOARDS.days && FIRST_BOARDS.days[date];
+    if (!day) {
+      badge.textContent = '暂无数据';
+      note.textContent = date + ' 暂无首板存档；新交易日会由工作流自动补充。';
+      box.innerHTML = '<div class="k" style="padding:12px 2px">该交易日没有可用首板数据。</div>';
+      return;
+    }
+    const stocks = Array.isArray(day.stocks) ? day.stocks : [];
+    const sealed = Number(day.sealed) || stocks.filter(stock => stock.status === 'success').length;
+    const total = Number(day.total) || stocks.length;
+    badge.textContent = '封住 ' + sealed + '/' + total + ' 只' + (day.rate ? ' · ' + day.rate : '');
+    note.innerHTML = '<b>' + esc(date) + '</b> 共 ' + stocks.length +
+      ' 只首次触板股；涨停原因、封板状态和首封时间来自打板客公开复盘。';
+    if (!stocks.length) {
+      box.innerHTML = '<div class="k" style="padding:12px 2px">当天没有首板股。</div>';
+      return;
+    }
+    const syms = stocks.map(stock => stock.sym);
+    box.innerHTML = '<div class="first-board-table-wrap"><table class="first-board-table">' +
+      '<thead><tr><th>股票</th><th>题材</th><th>涨停原因</th><th>状态</th>' +
+      '<th>涨幅</th><th>首封时间</th><th>开板</th></tr></thead><tbody>' +
+      stocks.map(stock => {
+        const statusClass = stock.status === 'success' ? ' ok' : stock.status === 'opened' ? ' bad' : '';
+        const change = String(stock.change || '');
+        const changeStyle = change.startsWith('-') ? ' style="color:var(--down)"' :
+          change.startsWith('+') ? ' style="color:var(--up)"' : '';
+        return '<tr>' +
+          '<td><button type="button" class="fb-stock-btn" data-sym="' + esc(stock.sym) + '">' +
+          esc(stock.name || stock.sym) + '<span class="fb-code">' + esc(String(stock.sym || '').slice(2)) +
+          '</span></button></td>' +
+          '<td class="fb-theme">' + esc(stock.theme || '—') + '</td>' +
+          '<td class="fb-reason">' + esc(stock.reason || stock.theme || '—') + '</td>' +
+          '<td><span class="fb-status' + statusClass + '">' + esc(stock.statusText || '—') + '</span></td>' +
+          '<td class="fb-num"' + changeStyle + '>' + esc(change || '—') + '</td>' +
+          '<td class="fb-num">' + esc(stock.firstTime || '—') + '</td>' +
+          '<td class="fb-num">' + (Number(stock.opens) || 0) + ' 次</td>' +
+          '</tr>';
+      }).join('') + '</tbody></table></div>';
+    box.querySelectorAll('.fb-stock-btn').forEach(button => {
+      button.addEventListener('click', () => openStock(button.dataset.sym, syms, date));
+    });
+  }).catch(error => {
+    if (token !== firstBoardRenderToken || date !== state.date) return;
+    badge.textContent = '加载失败';
+    note.textContent = date + ' 首板数据暂时无法读取。';
+    box.innerHTML = '<div class="k" style="padding:12px 2px">首板数据加载失败：' +
+      esc(error && error.message || error) + '</div>';
+  });
 }
 
 /* ---------------- 打板客盘后数据 ---------------- */

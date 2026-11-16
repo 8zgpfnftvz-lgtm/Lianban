@@ -2,11 +2,13 @@
 
 这是天天板体系里的独立连板复盘页，保留连板统计、梯队日线、断板节点案例和开盘啦题材数据，并统一为天天板的品牌、卡片密度和手机交互。
 
+连板统计下方新增按交易日联动的首板统计表，展示首板股票、题材、涨停原因、封板状态、涨幅、首封时间和开板次数。
+
 断板案例采用“案例说明＋中位股断板表＋结构判断”的格式，并在每张案例底部提供对应交易日的打板客网公开复盘链接，方便核对日期、最高板和中位股表现。
 
 所有文件都在根目录，不需要另建 `icons` 文件夹。手机 GitHub 网页上传时，直接多选以下文件：
 
-`index.html`、`manifest.json`、`manifest.webmanifest`、`sw.js`、`dabanke_data.json`、`tools/fetch_dabanke.py`、`.github/workflows/update-dabanke.yml`、`icon-32.png`、`icon-180.png`、`icon-192.png`、`icon-512.png`、`icon-maskable-512.png`、`README.md`、`.nojekyll`
+`index.html`、`manifest.json`、`manifest.webmanifest`、`sw.js`、`dabanke_data.json`、`first_board_data.json`、`tools/fetch_dabanke.py`、`tools/fetch_first_boards.py`、`.github/workflows/update-dabanke.yml`、`icon-32.png`、`icon-180.png`、`icon-192.png`、`icon-512.png`、`icon-maskable-512.png`、`README.md`、`.nojekyll`
 
 ## 打板客数据更新
 
@@ -15,6 +17,8 @@ PWA 运行时读取同源的 `dabanke_data.json`。GitHub Actions 在 A 股交�
 1. 抓取最新交易日，以及最近5个案例断板日；
 2. 只保存中位股涨跌幅、封板状态、最高板、封板率和市场摘要；
 3. 自动提交更新后的 `dabanke_data.json`。
+
+`tools/fetch_first_boards.py` 同时增量更新 `first_board_data.json`，保存各交易日首板股及涨停原因。
 
 也可以在 GitHub 仓库的 Actions 页面手动运行 `Update Dabanke review data`。
 

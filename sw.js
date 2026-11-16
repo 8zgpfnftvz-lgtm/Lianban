@@ -1,7 +1,7 @@
 /* 天天板 · 连板统计 PWA Service Worker
  * 只缓存同源页面本体；腾讯行情、东财涨停池、开盘啦接口不缓存。
  */
-const CACHE = 'ttb-lbtj-v20261115-2';
+const CACHE = 'ttb-lbtj-v20261116-1';
 const ASSETS = [
   './',
   './index.html',
@@ -12,7 +12,8 @@ const ASSETS = [
   './icon-192.png',
   './icon-512.png',
   './icon-maskable-512.png',
-  './dabanke_data.json'
+  './dabanke_data.json',
+  './first_board_data.json'
 ];
 
 self.addEventListener('install', event => {
@@ -50,7 +51,7 @@ self.addEventListener('fetch', event => {
   }
 
   // 盘后数据每天更新：网络优先，失败时回退到上一次缓存。
-  if (url.pathname.endsWith('/dabanke_data.json')) {
+  if (url.pathname.endsWith('/dabanke_data.json') || url.pathname.endsWith('/first_board_data.json')) {
     event.respondWith(
       fetch(req).then(res => {
         const copy = res.clone();
