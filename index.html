@@ -127,25 +127,31 @@ section[hidden]{display:none!important}
 .first-board-head{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:7px}
 .first-board-head h3{margin:0}
 .first-board-note{font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:8px}
-.first-board-table-wrap{max-height:360px;overflow:auto;border:1px solid var(--border);border-radius:10px;
-  background:var(--card);overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
-.first-board-table{width:100%;min-width:780px;border-collapse:collapse;font-size:11.5px}
-.first-board-table th{position:sticky;top:0;z-index:1;padding:7px 8px;text-align:left;
-  background:var(--soft);border-bottom:1px solid var(--border);color:var(--muted);
-  font-size:10.5px;font-weight:600;white-space:nowrap}
-.first-board-table td{padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.55}
+.first-board-table-wrap{max-height:320px;overflow:auto;border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);background:var(--card);overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch}
+.first-board-table{width:100%;min-width:820px;border-collapse:collapse;font-size:11.5px;
+  white-space:nowrap}
+.first-board-table th{position:sticky;top:0;z-index:2;height:29px;padding:4px 8px;text-align:right;
+  background:var(--card);border-bottom:1px solid var(--border);color:var(--muted);
+  font-size:10.5px;font-weight:500}
+.first-board-table th:first-child,.first-board-table th:nth-child(-n+6),
+.first-board-table td:first-child,.first-board-table td:nth-child(-n+6){text-align:left}
+.first-board-table td{height:31px;padding:5px 8px;border-bottom:1px solid var(--border);
+  vertical-align:middle;line-height:1.35}
+.first-board-table tbody tr:hover td{background:var(--soft)}
 .first-board-table tr:last-child td{border-bottom:0}
 .first-board-table .fb-stock-btn{padding:0;border:0;background:transparent;color:var(--fg);
-  font-weight:750;text-align:left;line-height:1.4}
+  font-weight:700;text-align:left;line-height:1.35}
 .first-board-table .fb-stock-btn:hover{color:var(--accent)}
-.first-board-table .fb-code{display:block;color:var(--muted);font-size:9.5px;margin-top:1px}
-.first-board-table .fb-theme{color:var(--accent2);white-space:nowrap}
-.first-board-table .fb-reason{min-width:230px;max-width:360px}
-.first-board-table .fb-status{display:inline-block;padding:2px 7px;border-radius:999px;font-size:10px;
-  white-space:nowrap;background:var(--soft);color:var(--muted)}
-.first-board-table .fb-status.ok{background:rgba(15,159,114,.12);color:var(--down)}
-.first-board-table .fb-status.bad{background:rgba(229,72,77,.12);color:var(--up)}
-.first-board-table .fb-num{white-space:nowrap;font-variant-numeric:tabular-nums}
+.first-board-table .fb-code{color:var(--muted);font-size:10.5px;font-variant-numeric:tabular-nums}
+.first-board-table .fb-reason{min-width:260px;max-width:380px;white-space:normal;line-height:1.4}
+.first-board-table .fb-tag{display:inline-block;padding:1px 7px;border-radius:999px;font-size:10px;
+  line-height:17px;white-space:nowrap;background:var(--soft);color:var(--muted)}
+.first-board-table .fb-tag.theme{color:var(--accent2);font-weight:600}
+.first-board-table .fb-tag.ok{background:var(--accent);color:#fff}
+.first-board-table .fb-tag.bad{background:var(--fg);color:var(--card)}
+.first-board-table .fb-num{font-variant-numeric:tabular-nums}
 .tier-row{display:grid;grid-template-columns:64px 1fr;gap:10px;padding:9px 0;border-top:1px dashed var(--border);align-items:start}
 .tier-row:first-child{border-top:0}
 .tier-lb{font-weight:800;font-size:13px;padding-top:3px;color:var(--accent)}
@@ -315,7 +321,7 @@ button,.chip,.stock-card,.tabs button{touch-action:manipulation}
   .case-table-wrap{max-height:220px}
   .case-table th,.case-table td{padding:6px 8px}
   .first-board-table-wrap{max-height:300px}
-  .first-board-table{min-width:730px}
+  .first-board-table{min-width:780px}
   /* 手机上梯队改为纵向堆叠，避免横向滑四列 */
   .tier-grid{display:block;overflow:visible;padding-bottom:0}
   .tier-col{width:auto;margin-bottom:12px}
@@ -1823,20 +1829,21 @@ function renderFirstBoards() {
     }
     const syms = stocks.map(stock => stock.sym);
     box.innerHTML = '<div class="first-board-table-wrap"><table class="first-board-table">' +
-      '<thead><tr><th>股票</th><th>题材</th><th>涨停原因</th><th>状态</th>' +
+      '<thead><tr><th>#</th><th>代码</th><th>名称</th><th>题材</th><th>涨停原因</th><th>状态</th>' +
       '<th>涨幅</th><th>首封时间</th><th>开板</th></tr></thead><tbody>' +
-      stocks.map(stock => {
+      stocks.map((stock, index) => {
         const statusClass = stock.status === 'success' ? ' ok' : stock.status === 'opened' ? ' bad' : '';
         const change = String(stock.change || '');
         const changeStyle = change.startsWith('-') ? ' style="color:var(--down)"' :
           change.startsWith('+') ? ' style="color:var(--up)"' : '';
         return '<tr>' +
+          '<td class="fb-code">' + String(index + 1).padStart(2, '0') + '</td>' +
+          '<td class="fb-code">' + esc(String(stock.sym || '').slice(2)) + '</td>' +
           '<td><button type="button" class="fb-stock-btn" data-sym="' + esc(stock.sym) + '">' +
-          esc(stock.name || stock.sym) + '<span class="fb-code">' + esc(String(stock.sym || '').slice(2)) +
-          '</span></button></td>' +
-          '<td class="fb-theme">' + esc(stock.theme || '—') + '</td>' +
+          esc(stock.name || stock.sym) + '</button></td>' +
+          '<td><span class="fb-tag theme">' + esc(stock.theme || '—') + '</span></td>' +
           '<td class="fb-reason">' + esc(stock.reason || stock.theme || '—') + '</td>' +
-          '<td><span class="fb-status' + statusClass + '">' + esc(stock.statusText || '—') + '</span></td>' +
+          '<td><span class="fb-tag' + statusClass + '">' + esc(stock.statusText || '—') + '</span></td>' +
           '<td class="fb-num"' + changeStyle + '>' + esc(change || '—') + '</td>' +
           '<td class="fb-num">' + esc(stock.firstTime || '—') + '</td>' +
           '<td class="fb-num">' + (Number(stock.opens) || 0) + ' 次</td>' +
