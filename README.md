@@ -8,7 +8,7 @@
 
 所有文件都在根目录，不需要另建 `icons` 文件夹。手机 GitHub 网页上传时，直接多选以下文件：
 
-`index.html`、`manifest.json`、`manifest.webmanifest`、`sw.js`、`dabanke_data.json`、`first_board_data.json`、`tools/fetch_dabanke.py`、`tools/fetch_first_boards.py`、`.github/workflows/update-dabanke.yml`、`icon-32.png`、`icon-180.png`、`icon-192.png`、`icon-512.png`、`icon-maskable-512.png`、`README.md`、`.nojekyll`
+`index.html`、`manifest.json`、`manifest.webmanifest`、`sw.js`、`dabanke_data.json`、`first_board_data.json`、`lianban_snapshot.json`、`tools/fetch_dabanke.py`、`tools/fetch_first_boards.py`、`tools/fetch_lianban_snapshot.py`、`.github/workflows/update-dabanke.yml`、`icon-32.png`、`icon-180.png`、`icon-192.png`、`icon-512.png`、`icon-maskable-512.png`、`README.md`、`.nojekyll`
 
 ## 打板客数据更新
 
@@ -19,6 +19,8 @@ PWA 运行时读取同源的 `dabanke_data.json`。GitHub Actions 在 A 股交�
 3. 自动提交更新后的 `dabanke_data.json`。
 
 `tools/fetch_first_boards.py` 同时增量更新 `first_board_data.json`，保存各交易日首板股及涨停原因。
+
+`tools/fetch_lianban_snapshot.py` 更新 `lianban_snapshot.json`，用于补入最新交易日的 3板以上连板梯队。
 
 也可以在 GitHub 仓库的 Actions 页面手动运行 `Update Dabanke review data`。
 

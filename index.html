@@ -802,6 +802,8 @@ const DABANKE_CACHE_KEY = 'dabankeReviewDataV1';
 let FIRST_BOARDS = { days: {} };
 let firstBoardsPromise = null;
 let firstBoardRenderToken = 0;
+let lianbanSnapshotMerged = false;
+let lianbanSnapshotPromise = null;
 const STOCK_NAMES = {};
 let CAL = DAYS.slice();
 let CAL_SET = new Set(DAYS);
@@ -1691,6 +1693,81 @@ function renderBig() {
 }
 
 /* ---------------- 首板统计 ---------------- */
+function mergeLianbanSnapshot(value) {
+  if (lianbanSnapshotMerged || !value || !value.days) return false;
+  const selectedDate = state.date;
+  const preserveSelection = selectedDate !== HIST.date;
+  const dates = Object.keys(value.days).sort();
+  if (!dates.length) return false;
+  dates.forEach(date => {
+    if (!HIST.dates.includes(date)) HIST.dates.push(date);
+  });
+  HIST.dates.sort();
+  rebuildDayIdx();
+  N = DAYS.length;
+  dates.forEach(date => {
+    const di = DAY_IDX[date];
+    const previousDate = di > 0 ? DAYS[di - 1] : "";
+    (value.days[date].stocks || []).forEach(stock => {
+      const boards = Number(stock.boards);
+      if (!stock.sym || boards < 3 || di === undefined) return;
+      let run = HIST.runs.find(row =>
+        row[0] === stock.sym && row[4] === previousDate && Number(row[5]) === boards - 1
+      );
+      if (run) {
+        run[1] = stock.name || run[1];
+        run[4] = date;
+        run[5] = boards;
+        run[6] = stock.theme || run[6];
+        run[7] = stock.reason || run[7];
+        run[8] = date;
+        run[9] = stock.reason || run[9];
+        return;
+      }
+      run = HIST.runs.find(row => row[0] === stock.sym && row[4] === date);
+      if (run) return;
+      const startIndex = Math.max(0, di - boards + 1);
+      HIST.runs.push([
+        stock.sym,
+        stock.name || stock.sym,
+        stock.theme || "",
+        DAYS[startIndex],
+        date,
+        boards,
+        stock.theme || "",
+        stock.reason || "",
+        date,
+        stock.reason || "",
+      ]);
+    });
+  });
+  HIST.date = DAYS[N - 1];
+  lianbanSnapshotMerged = true;
+  rebuildAll();
+  state.date = preserveSelection && DAY_IDX[selectedDate] !== undefined ? selectedDate : HIST.date;
+  state.rangeEnd = DAY_IDX[state.date] === undefined ? N - 1 : DAY_IDX[state.date];
+  syncDateSelect(true);
+  renderBoard(true);
+  if (state.view === 'tier') renderTier();
+  if (state.view === 'cases') renderCases();
+  syncHash();
+  return true;
+}
+
+function loadLianbanSnapshot() {
+  if (lianbanSnapshotPromise) return lianbanSnapshotPromise;
+  lianbanSnapshotPromise = fetch('lianban_snapshot.json?v=' + Date.now(), { cache: 'no-store' })
+    .then(response => {
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      return response.json();
+    })
+    .then(value => {
+      mergeLianbanSnapshot(value);
+      return value;
+    });
+  return lianbanSnapshotPromise;
+}
+
 function loadFirstBoardData() {
   if (firstBoardsPromise) return firstBoardsPromise;
   firstBoardsPromise = fetch('first_board_data.json?v=' + Date.now(), { cache: 'no-store' })
@@ -2313,6 +2390,7 @@ function init() {
   else if (v === 'board') renderBoard(true);
   syncHash();
   loadDabankeData();
+  loadLianbanSnapshot().catch(() => { });
   try {
     const qs = new URLSearchParams(location.search);
     if (qs.get('stock')) setTimeout(() => openStock(qs.get('stock'), null, qs.get('date') || state.date), 120);
