@@ -123,6 +123,33 @@ section[hidden]{display:none!important}
 .chart-wrap::-webkit-scrollbar-thumb{background:var(--muted);border-radius:999px;opacity:.55}
 .chart-wrap svg{display:block;height:auto}
 .sel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:18px 0 8px;flex-wrap:wrap}
+.lh-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:10px 0}
+.lh-summary .card{border:1px solid var(--border);border-radius:10px;padding:8px 10px;background:var(--soft)}
+.lh-summary .card span{display:block;font-size:10px;color:var(--muted)}
+.lh-summary .card b{display:block;font-size:16px;line-height:1.5;font-variant-numeric:tabular-nums}
+.lh-table-wrap{overflow-x:auto;border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  background:var(--card);overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.lh-table{width:100%;min-width:1060px;border-collapse:collapse;font-size:11.5px;white-space:nowrap}
+.lh-table th{position:sticky;top:0;z-index:2;height:30px;padding:4px 8px;text-align:right;
+  background:var(--card);border-bottom:1px solid var(--border);color:var(--muted);
+  font-size:10.5px;font-weight:500}
+.lh-table th:first-child,.lh-table th:nth-child(-n+4),
+.lh-table td:first-child,.lh-table td:nth-child(-n+4){text-align:left}
+.lh-table td{height:34px;padding:5px 8px;border-bottom:1px solid var(--border);
+  vertical-align:middle;line-height:1.4}
+.lh-table tbody tr:hover td{background:var(--soft)}
+.lh-table tr:last-child td{border-bottom:0}
+.lh-table .lh-stock-btn{padding:0;border:0;background:transparent;color:var(--fg);
+  font-weight:700;text-align:left;line-height:1.35}
+.lh-table .lh-stock-btn:hover{color:var(--accent)}
+.lh-table .lh-code{color:var(--muted);font-size:10px;font-variant-numeric:tabular-nums}
+.lh-table .lh-reason{min-width:280px;max-width:420px;white-space:normal}
+.lh-table .lh-explain{display:block;color:var(--muted);font-size:9.5px;margin-top:1px}
+.lh-table .lh-tag{display:inline-block;padding:1px 7px;border-radius:999px;font-size:10px;
+  line-height:17px;white-space:nowrap;background:var(--soft);color:var(--muted)}
+.lh-table .lh-tag.ok{background:rgba(229,72,77,.12);color:var(--up)}
+.lh-table .lh-tag.bad{background:rgba(15,159,114,.12);color:var(--down)}
+.lh-table .lh-num{font-variant-numeric:tabular-nums}
 .first-board-section{margin-top:20px;padding-top:15px;border-top:1px solid var(--border)}
 .first-board-head{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap;margin-bottom:7px}
 .first-board-head h3{margin:0}
@@ -290,6 +317,7 @@ button,.chip,.stock-card,.tabs button{touch-action:manipulation}
 @media(max-width:640px){
   .dist{grid-template-columns:repeat(2,minmax(0,1fr))}
   .stat-strip{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .lh-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
   .mark{width:40px;height:40px;border-radius:12px}
   .brand-chart{width:28px;height:28px}
 }
@@ -358,6 +386,7 @@ button,.chip,.stock-card,.tabs button{touch-action:manipulation}
   <button type="button" data-view="board" class="on">连板统计</button>
   <button type="button" data-view="tier">梯队日线复盘</button>
   <button type="button" data-view="cases">断板节点案例</button>
+  <button type="button" data-view="longhu">龙虎榜</button>
   <button type="button" data-view="help">口径与说明</button>
 </nav>
 
@@ -411,6 +440,37 @@ button,.chip,.stock-card,.tabs button{touch-action:manipulation}
       </div>
       <div id="firstBoardTable"></div>
     </div>
+  </div>
+</section>
+
+<section id="view-longhu" hidden>
+  <div class="panel">
+    <div class="head-row">
+      <div>
+        <div class="kicker">DRAGON & TIGER LIST</div>
+        <h2 style="margin:2px 0 0">龙虎榜</h2>
+      </div>
+      <span class="badge" id="lhBadge">加载中…</span>
+    </div>
+    <div class="bar">
+      <button type="button" id="lhPrevDay">‹ 前一交易日</button>
+      <input type="date" id="lhDate" aria-label="龙虎榜交易日">
+      <button type="button" id="lhNextDay">后一交易日 ›</button>
+      <button type="button" id="lhLatest">最新榜单</button>
+      <button type="button" id="lhReload">重新加载</button>
+    </div>
+    <div class="filters" id="lhFilters">
+      <button type="button" data-lh-f="all" class="on">全部</button>
+      <button type="button" data-lh-f="buy">净买入</button>
+      <button type="button" data-lh-f="sell">净卖出</button>
+      <button type="button" data-lh-f="institution">机构参与</button>
+    </div>
+    <div class="lh-summary" id="lhSummary"></div>
+    <div class="note" style="margin-bottom:9px">
+      按龙虎榜净买入额排序；净额、买卖金额、成交占比和换手率来自东方财富公开龙虎榜数据。
+      点击股票名称可查看当日附近日线。
+    </div>
+    <div id="lhTable"><div class="k" style="padding:14px 2px">正在读取龙虎榜…</div></div>
   </div>
 </section>
 
@@ -804,6 +864,10 @@ const state = {
   klErr: new Set(),
   loading: new Set(),
   caseFilter: 'all',
+  lhDate: '',
+  lhRows: [],
+  lhFilter: 'all',
+  lhLoading: false,
   modal: { list: [], idx: -1, sym: null, bars: null, range: 150, focusDate: null },
 };
 let DABANKE = { days: {} };
@@ -844,7 +908,7 @@ function renderMeta() {
 
 function applyView(v) {
   $$('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.view === v));
-  ['board', 'tier', 'cases', 'help'].forEach(k => {
+  ['board', 'tier', 'cases', 'longhu', 'help'].forEach(k => {
     const el = $('#view-' + k);
     if (el) el.hidden = k !== v;
   });
@@ -854,6 +918,7 @@ function switchView(v) {
   applyView(v);
   if (v === 'tier') renderTier();
   if (v === 'cases') renderCases();
+  if (v === 'longhu') loadLonghu(state.lhDate, false);
   if (v === 'board') renderBoard();
   syncHash();
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -866,7 +931,7 @@ function syncHash() {
 function readHash() {
   const h = location.hash.replace(/^#/, '');
   const parts = h.split('/');
-  const v = ['board', 'tier', 'cases', 'help'].indexOf(parts[0]) >= 0 ? parts[0] : 'board';
+  const v = ['board', 'tier', 'cases', 'longhu', 'help'].indexOf(parts[0]) >= 0 ? parts[0] : 'board';
   if (v === 'tier' && parts[1] && DAY_IDX[parts[1]] !== undefined) state.date = parts[1];
   return v;
 }
@@ -1175,9 +1240,11 @@ const KL_HOSTS = [
   'https://proxy.finance.qq.com/ifzqgtimg/appstock/app/kline/kline?param=%s,day,%a,%b,%d',
   'https://web.ifzq.gtimg.cn/appstock/app/kline/kline?param=%s,day,%a,%b,%d',
 ];
+const BJ_KLINE_HOST = 'https://proxy.finance.qq.com/ifzqgtimg/appstock/app/newfqkline/get?param=%s,day,%a,%b,%d,qfq';
 function jsonpKline(sym, days, start, end) {
   days = days || 120;
-  const hosts = KL_HOSTS.map(h => h
+  const templates = sym.startsWith('bj') ? [BJ_KLINE_HOST] : KL_HOSTS;
+  const hosts = templates.map(h => h
     .replace('%s', sym)
     .replace('%a', start || '')
     .replace('%b', end || '')
@@ -1213,6 +1280,7 @@ function jsonpKline(sym, days, start, end) {
     next();
   });
 }
+
 const KL_CACHE_PREFIX = 'lbktjRangeRawV1:';
 function lsGet(sym, focusDate) {
   try {
@@ -1699,6 +1767,187 @@ function renderBig() {
     if (old) old.remove();
     $('#mTip').style.display = 'none';
   };
+}
+
+/* ---------------- 龙虎榜 ---------------- */
+const LH_CACHE = new Map();
+let lhRequestToken = 0;
+
+function localDateString() {
+  const now = new Date();
+  return now.getFullYear() + '-' + pad2(now.getMonth() + 1) + '-' + pad2(now.getDate());
+}
+
+function lhTradingDay(date, delta) {
+  const value = new Date(date + 'T12:00:00');
+  if (isNaN(value.getTime())) return localDateString();
+  do {
+    value.setDate(value.getDate() + delta);
+  } while (value.getDay() === 0 || value.getDay() === 6);
+  return value.getFullYear() + '-' + pad2(value.getMonth() + 1) + '-' + pad2(value.getDate());
+}
+
+function formatAmount(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return '—';
+  const sign = number < 0 ? '-' : '';
+  const absolute = Math.abs(number);
+  if (absolute >= 1e8) return sign + (absolute / 1e8).toFixed(2) + '亿';
+  if (absolute >= 1e4) return sign + (absolute / 1e4).toFixed(1) + '万';
+  return sign + absolute.toFixed(0);
+}
+
+function jsonpLonghu(url) {
+  return new Promise((resolve, reject) => {
+    const callback = '__lh' + Math.floor(Math.random() * 1e9);
+    const script = document.createElement('script');
+    let done = false;
+    const timer = setTimeout(() => finish(new Error('龙虎榜请求超时')), 15000);
+    function finish(error, data) {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      if (script.parentNode) script.parentNode.removeChild(script);
+      try { delete window[callback]; } catch (error) { window[callback] = undefined; }
+      if (error) reject(error); else resolve(data);
+    }
+    script.onload = () => {
+      const data = window[callback];
+      if (!data) finish(new Error('龙虎榜返回为空'));
+      else finish(null, data);
+    };
+    script.onerror = () => finish(new Error('龙虎榜加载失败'));
+    script.src = url + '&callback=' + callback;
+    document.head.appendChild(script);
+  });
+}
+
+async function fetchLonghu(date) {
+  const filterText = "(TRADE_DATE='" + date + "')";
+  const url = 'https://datacenter-web.eastmoney.com/api/data/v1/get?' +
+    'reportName=RPT_DAILYBILLBOARD_DETAILSNEW&columns=ALL&pageNumber=1&pageSize=500' +
+    '&sortTypes=-1&sortColumns=BILLBOARD_NET_AMT&filter=' + encodeURIComponent(filterText) +
+    '&source=WEB&client=WEB';
+  let value;
+  try {
+    value = await fetchJSON(url, 15000);
+  } catch (error) {
+    value = await jsonpLonghu(url);
+  }
+  const rows = value && value.result && Array.isArray(value.result.data) ? value.result.data : [];
+  const bySymbol = new Map();
+  rows.forEach(row => {
+    const sym = symOfCode(row.SECURITY_CODE);
+    if (!sym) return;
+    let item = bySymbol.get(sym);
+    if (!item) {
+      item = {
+        sym,
+        code: String(row.SECURITY_CODE || ''),
+        name: String(row.SECURITY_NAME_ABBR || row.SECURITY_CODE || ''),
+        reason: String(row.EXPLANATION || '—'),
+        explain: String(row.EXPLAIN || ''),
+        close: Number(row.CLOSE_PRICE),
+        change: Number(row.CHANGE_RATE),
+        net: Number(row.BILLBOARD_NET_AMT),
+        buy: Number(row.BILLBOARD_BUY_AMT),
+        sell: Number(row.BILLBOARD_SELL_AMT),
+        dealRatio: Number(row.DEAL_AMOUNT_RATIO),
+        turnover: Number(row.TURNOVERRATE),
+      };
+      bySymbol.set(sym, item);
+    } else {
+      const reason = String(row.EXPLANATION || '');
+      if (reason && !item.reason.includes(reason)) item.reason += ' / ' + reason;
+      const explain = String(row.EXPLAIN || '');
+      if (explain && !item.explain.includes(explain)) item.explain += ' / ' + explain;
+    }
+  });
+  return Array.from(bySymbol.values()).sort((a, b) => b.net - a.net);
+}
+
+function renderLonghu() {
+  const rows = state.lhRows || [];
+  const filtered = rows.filter(row => {
+    if (state.lhFilter === 'buy') return row.net > 0;
+    if (state.lhFilter === 'sell') return row.net < 0;
+    if (state.lhFilter === 'institution') return /机构/.test(row.explain);
+    return true;
+  });
+  const net = rows.reduce((sum, row) => sum + (Number(row.net) || 0), 0);
+  const buy = rows.reduce((sum, row) => sum + (Number(row.buy) || 0), 0);
+  const sell = rows.reduce((sum, row) => sum + (Number(row.sell) || 0), 0);
+  const top = rows.slice().sort((a, b) => b.net - a.net)[0];
+  $('#lhBadge').textContent = state.lhDate + ' · ' + rows.length + ' 只';
+  $('#lhSummary').innerHTML = [
+    ['上榜股票', rows.length + ' 只'],
+    ['龙虎榜买入', formatAmount(buy)],
+    ['龙虎榜卖出', formatAmount(sell)],
+    ['净买入合计', formatAmount(net)],
+  ].map(item => '<div class="card"><span>' + item[0] + '</span><b>' + item[1] + '</b></div>').join('');
+  if (!rows.length) {
+    $('#lhTable').innerHTML = '<div class="k" style="padding:14px 2px">该日期暂无龙虎榜数据。</div>';
+    return;
+  }
+  const syms = rows.map(row => row.sym);
+  const body = filtered.map((row, index) => {
+    STOCK_NAMES[row.sym] = row.name;
+    const changeClass = row.change > 0 ? ' ok' : row.change < 0 ? ' bad' : '';
+    const netColor = row.net > 0 ? 'var(--up)' : row.net < 0 ? 'var(--down)' : 'var(--fg)';
+    return '<tr>' +
+      '<td class="lh-code">' + String(index + 1).padStart(2, '0') + '</td>' +
+      '<td class="lh-code">' + esc(row.code) + '</td>' +
+      '<td><button type="button" class="lh-stock-btn" data-sym="' + esc(row.sym) + '">' + esc(row.name) + '</button></td>' +
+      '<td class="lh-reason">' + esc(row.reason) +
+      (row.explain ? '<span class="lh-explain">' + esc(row.explain) + '</span>' : '') + '</td>' +
+      '<td class="lh-num">' + (Number.isFinite(row.close) ? row.close.toFixed(2) : '—') + '</td>' +
+      '<td class="lh-num"' + (Number.isFinite(row.change) ? ' style="color:' + netColor + '"' : '') + '>' +
+      (Number.isFinite(row.change) ? (row.change > 0 ? '+' : '') + row.change.toFixed(2) + '%' : '—') + '</td>' +
+      '<td class="lh-num" style="color:' + netColor + ';font-weight:700">' + formatAmount(row.net) + '</td>' +
+      '<td class="lh-num">' + formatAmount(row.buy) + '</td>' +
+      '<td class="lh-num">' + formatAmount(row.sell) + '</td>' +
+      '<td class="lh-num">' + (Number.isFinite(row.dealRatio) ? row.dealRatio.toFixed(2) + '%' : '—') + '</td>' +
+      '<td class="lh-num">' + (Number.isFinite(row.turnover) ? row.turnover.toFixed(2) + '%' : '—') + '</td>' +
+      '</tr>';
+  }).join('');
+  $('#lhTable').innerHTML = '<div class="lh-table-wrap"><table class="lh-table">' +
+    '<thead><tr><th>#</th><th>代码</th><th>名称</th><th>上榜原因</th><th>收盘</th>' +
+    '<th>涨跌幅</th><th>净买入</th><th>买入额</th><th>卖出额</th><th>成交占比</th><th>换手率</th>' +
+    '</tr></thead><tbody>' + (body || '<tr><td colspan="11" class="k">当前筛选没有记录。</td></tr>') +
+    '</tbody></table></div>';
+  $$('#lhTable .lh-stock-btn').forEach(button => {
+    button.addEventListener('click', () => openStock(button.dataset.sym, syms, state.lhDate));
+  });
+}
+
+async function loadLonghu(date, force) {
+  date = /^\d{4}-\d{2}-\d{2}$/.test(date || '') ? date : localDateString();
+  state.lhDate = date;
+  $('#lhDate').value = date;
+  if (!force && LH_CACHE.has(date)) {
+    state.lhRows = LH_CACHE.get(date);
+    renderLonghu();
+    return;
+  }
+  const token = ++lhRequestToken;
+  state.lhLoading = true;
+  $('#lhBadge').textContent = '加载中…';
+  $('#lhSummary').innerHTML = '';
+  $('#lhTable').innerHTML = '<div class="k" style="padding:14px 2px">正在读取 ' + esc(date) + ' 龙虎榜…</div>';
+  try {
+    const rows = await fetchLonghu(date);
+    if (token !== lhRequestToken) return;
+    LH_CACHE.set(date, rows);
+    state.lhRows = rows;
+    renderLonghu();
+  } catch (error) {
+    if (token !== lhRequestToken) return;
+    $('#lhBadge').textContent = '加载失败';
+    $('#lhTable').innerHTML = '<div class="k" style="padding:14px 2px">龙虎榜加载失败：' +
+      esc(error && error.message || error) + '</div>';
+  } finally {
+    if (token === lhRequestToken) state.lhLoading = false;
+  }
 }
 
 /* ---------------- 首板统计 ---------------- */
@@ -2295,6 +2544,18 @@ async function updateData() {
 /* ---------------- 事件 ---------------- */
 function bind() {
   $$('#tabs button').forEach(b => b.addEventListener('click', () => switchView(b.dataset.view)));
+  $('#lhPrevDay').addEventListener('click', () => loadLonghu(lhTradingDay(state.lhDate || localDateString(), -1), false));
+  $('#lhNextDay').addEventListener('click', () => loadLonghu(lhTradingDay(state.lhDate || localDateString(), 1), false));
+  $('#lhLatest').addEventListener('click', () => loadLonghu(localDateString(), true));
+  $('#lhReload').addEventListener('click', () => loadLonghu(state.lhDate || localDateString(), true));
+  $('#lhDate').addEventListener('change', event => loadLonghu(event.target.value, false));
+  $$('#lhFilters button').forEach(button => {
+    button.addEventListener('click', () => {
+      state.lhFilter = button.dataset.lhF;
+      $$('#lhFilters button').forEach(item => item.classList.toggle('on', item === button));
+      renderLonghu();
+    });
+  });
   const ub = $('#updateBtn');
   if (ub) ub.addEventListener('click', updateData);
   const ib = $('#installBtn');
@@ -2402,6 +2663,7 @@ if (/^https?:/.test(location.protocol) && 'serviceWorker' in navigator) {
 
 /* ---------------- 启动 ---------------- */
 function init() {
+  state.lhDate = localDateString();
   renderMeta();
   syncDateSelect();
   bind();
@@ -2411,6 +2673,7 @@ function init() {
   syncDateSelect();
   if (v === 'tier') renderTier();
   else if (v === 'cases') renderCases();
+  else if (v === 'longhu') loadLonghu(state.lhDate, false);
   else if (v === 'board') renderBoard(true);
   syncHash();
   loadDabankeData();
