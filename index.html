@@ -127,6 +127,38 @@ section[hidden]{display:none!important}
 .lh-summary .card{border:1px solid var(--border);border-radius:10px;padding:8px 10px;background:var(--soft)}
 .lh-summary .card span{display:block;font-size:10px;color:var(--muted)}
 .lh-summary .card b{display:block;font-size:16px;line-height:1.5;font-variant-numeric:tabular-nums}
+.hot-money-block{margin:10px 0 13px}
+.hot-money-head{display:flex;justify-content:space-between;align-items:flex-end;gap:8px;flex-wrap:wrap;
+  padding:9px 11px;border:1px solid var(--border);border-bottom:0;border-radius:11px 11px 0 0;
+  background:linear-gradient(110deg,rgba(229,72,77,.07),rgba(36,107,253,.035))}
+.hot-money-head h3{margin:0;font-size:17px}
+.hot-money-sub{font-size:10.5px;color:var(--muted)}
+.hot-money-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:0 0 11px 11px;
+  background:var(--card);-webkit-overflow-scrolling:touch}
+.hot-money-table{width:100%;min-width:720px;border-collapse:collapse;font-size:11.5px}
+.hot-money-table th{height:29px;padding:4px 9px;text-align:center;background:var(--soft);
+  color:var(--muted);font-size:10.5px;font-weight:600;border-bottom:1px solid var(--border)}
+.hot-money-table th:nth-child(2),.hot-money-table th:nth-child(3){text-align:left}
+.hot-money-table td{height:48px;padding:5px 9px;border-bottom:1px solid var(--border);vertical-align:middle}
+.hot-money-table tr:last-child td{border-bottom:0}
+.hot-money-table tbody tr:hover td{background:var(--soft)}
+.hot-money-rank{text-align:center;color:var(--muted);font-weight:700;font-variant-numeric:tabular-nums}
+.hot-money-stock{font-weight:750;white-space:nowrap}
+.hot-money-stock button{padding:0;border:0;background:transparent;color:var(--fg);font-weight:750}
+.hot-money-stock button:hover{color:var(--accent)}
+.hot-money-seats{display:flex;gap:4px;flex-wrap:wrap}
+.hot-money-seat{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:6px;
+  border:1px solid var(--border);background:var(--card);font-size:10px;line-height:1.35;white-space:nowrap}
+.hot-money-seat b{font-weight:700;color:var(--fg)}
+.hot-money-seat.in{color:var(--up);border-color:rgba(229,72,77,.24)}
+.hot-money-seat.out{color:var(--down);border-color:rgba(15,159,114,.24)}
+.hot-money-disclaimer{font-size:9.5px;color:var(--muted);line-height:1.55;margin-top:5px}
+.seat-map-details{margin-top:5px;font-size:10px;color:var(--muted)}
+.seat-map-details summary{cursor:pointer;color:var(--accent)}
+.seat-map-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 12px;margin-top:6px}
+.seat-map-row{display:flex;gap:6px;min-width:0;padding:2px 0;border-bottom:1px dotted var(--border)}
+.seat-map-row b{min-width:72px;color:var(--fg);font-weight:650}
+.seat-map-row span{min-width:0;line-height:1.45}
 .lh-table-wrap{overflow-x:auto;border-top:1px solid var(--border);border-bottom:1px solid var(--border);
   background:var(--card);overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .lh-table{width:100%;min-width:1060px;border-collapse:collapse;font-size:11.5px;white-space:nowrap}
@@ -318,6 +350,7 @@ button,.chip,.stock-card,.tabs button{touch-action:manipulation}
   .dist{grid-template-columns:repeat(2,minmax(0,1fr))}
   .stat-strip{grid-template-columns:repeat(2,minmax(0,1fr))}
   .lh-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .seat-map-list{grid-template-columns:1fr}
   .mark{width:40px;height:40px;border-radius:12px}
   .brand-chart{width:28px;height:28px}
 }
@@ -466,6 +499,25 @@ button,.chip,.stock-card,.tabs button{touch-action:manipulation}
       <button type="button" data-lh-f="institution">机构参与</button>
     </div>
     <div class="lh-summary" id="lhSummary"></div>
+    <div class="hot-money-block" id="hotMoneyBlock">
+      <div class="hot-money-head">
+        <div>
+          <div class="kicker">HOT MONEY SEATS</div>
+          <h3 id="hotMoneyTitle">游资龙虎榜 · 热度TOP20</h3>
+        </div>
+        <span class="hot-money-sub">按识别席位单笔净额排序 · 别名仅供参考</span>
+      </div>
+      <div class="hot-money-wrap" id="hotMoneyTable">
+        <div class="k" style="padding:14px 2px">正在整理游资席位…</div>
+      </div>
+      <div class="hot-money-disclaimer">
+        别名是市场常用称呼，不是交易所或券商的身份确认；“游资”仅用于复盘标签，不代表资金性质或后续方向。
+      </div>
+      <details class="seat-map-details">
+        <summary>查看常用席位别名参考</summary>
+        <div class="seat-map-list" id="hotSeatLegend"></div>
+      </details>
+    </div>
     <div class="note" style="margin-bottom:9px">
       按龙虎榜净买入额排序；净额、买卖金额、成交占比和换手率来自东方财富公开龙虎榜数据。
       点击股票名称可查看当日附近日线。
@@ -866,6 +918,7 @@ const state = {
   caseFilter: 'all',
   lhDate: '',
   lhRows: [],
+  lhHot: [],
   lhFilter: 'all',
   lhLoading: false,
   modal: { list: [], idx: -1, sym: null, bars: null, range: 150, focusDate: null },
@@ -1822,6 +1875,155 @@ function jsonpLonghu(url) {
   });
 }
 
+const HOT_MONEY_SEAT_RULES = [
+  { alias: '宁波财神殿路', reference: '徐翔（市场常用关联）', pattern: /宁波财神殿南/ },
+  { alias: '宁波和源路', pattern: /宁波和源路/ },
+  { alias: '紫阳东路', pattern: /紫阳东路/ },
+  { alias: '佛山系', pattern: /佛山/ },
+  { alias: '佛山系', pattern: /国泰海通.*三亚迎宾路/ },
+  { alias: '玉兰路', pattern: /玉兰路/ },
+  { alias: '玉兰路', pattern: /东莞证券.*南京分公司/ },
+  { alias: '章盟主', pattern: /长宁区江苏路|上海江苏路/ },
+  { alias: '国新北', pattern: /国新证券.*北京分公司/ },
+  { alias: '山东帮', pattern: /中泰证券.*济南/ },
+  { alias: '山东帮', pattern: /东方证券.*厦门仙岳路/ },
+  { alias: '思明南路', pattern: /思明南路/ },
+  { alias: '思明南路', pattern: /东亚前海.*上海分公司/ },
+  { alias: '温州帮', pattern: /温州/ },
+  { alias: '温州帮', pattern: /国泰海通.*常州健身路/ },
+  { alias: '赵老哥', pattern: /中国银河.*绍兴/ },
+  { alias: '作手新一', pattern: /南京太平南路/ },
+  { alias: '消闲派', pattern: /湛江万豪世家/ },
+  { alias: '桑田路', pattern: /桑田路/ },
+  { alias: '拉萨天团', pattern: /拉萨/ },
+  { alias: '大小说家', pattern: /中信建投.*福州东街/ },
+  { alias: '低位挖掘', pattern: /中信建投.*福清福和路/ },
+  { alias: '独股一剑', pattern: /华泰证券.*北京月坛南街/ },
+  { alias: '余哥', pattern: /甬兴证券.*四川分公司/ },
+  { alias: '粉葛', pattern: /东亚前海.*深圳分公司/ },
+  { alias: '量化打板', pattern: /中国国际金融.*上海分公司/ },
+  { alias: '量化打板', pattern: /华鑫证券.*上海分公司/ },
+  { alias: '量化打板', pattern: /华鑫证券.*上海金山/ },
+  { alias: '量化打板', pattern: /开源证券.*西安西大街/ },
+  { alias: '量化打板', pattern: /国泰海通.*总部/ },
+  { alias: '量化打板', pattern: /华泰证券.*总部/ },
+];
+
+const HOT_MONEY_REFERENCES = [
+  ['宁波财神殿路', '民生证券·宁波财神殿南路｜市场常用关联：徐翔'],
+  ['宁波和源路', '甬兴证券·宁波和源路'],
+  ['紫阳东路', '国泰海通·武汉紫阳东路'],
+  ['章盟主', '国泰海通·上海长宁区江苏路'],
+  ['佛山系', '国泰海通·三亚迎宾路等'],
+  ['玉兰路', '东莞证券·南京分公司等'],
+  ['大小说家', '中信建投·福州东街'],
+  ['低位挖掘', '中信建投·福清福和路'],
+  ['思明南路', '东亚前海·上海分公司'],
+  ['温州帮', '国泰海通·常州健身路等'],
+  ['消闲派', '国泰海通·湛江万豪世家'],
+  ['山东帮', '东方证券·厦门仙岳路等'],
+  ['作手新一', '国泰海通·南京太平南路'],
+  ['余哥', '甬兴证券·四川分公司'],
+  ['粉葛', '东亚前海·深圳分公司'],
+  ['独股一剑', '华泰证券·北京月坛南街'],
+  ['国新北', '国新证券·北京分公司'],
+  ['量化打板', '开源西安西大街／华鑫上海金山／国泰海通总部等'],
+  ['拉萨天团', '东方财富证券·拉萨系营业部'],
+  ['赵老哥', '中国银河·绍兴证券营业部等'],
+];
+
+function hotMoneySeat(seatName) {
+  return HOT_MONEY_SEAT_RULES.find(rule => rule.pattern.test(seatName)) || null;
+}
+
+async function fetchLonghuReport(report, date) {
+  const filterText = "(TRADE_DATE='" + date + "')";
+  const url = 'https://datacenter-web.eastmoney.com/api/data/v1/get?' +
+    'reportName=' + report + '&columns=ALL&pageNumber=1&pageSize=5000' +
+    '&filter=' + encodeURIComponent(filterText) + '&source=WEB&client=WEB';
+  let value;
+  try {
+    value = await fetchJSON(url, 15000);
+  } catch (error) {
+    value = await jsonpLonghu(url);
+  }
+  return value && value.result && Array.isArray(value.result.data) ? value.result.data : [];
+}
+
+async function fetchLonghuSeats(date) {
+  const lists = await Promise.all([
+    fetchLonghuReport('RPT_BILLBOARD_DAILYDETAILSBUY', date),
+    fetchLonghuReport('RPT_BILLBOARD_DAILYDETAILSSELL', date),
+  ]);
+  const bySeat = new Map();
+  lists.forEach(rows => {
+    rows.forEach(row => {
+      const code = String(row.SECURITY_CODE || '');
+      const seatCode = String(row.OPERATEDEPT_CODE || '');
+      const seatName = String(row.OPERATEDEPT_NAME || '');
+      if (!code || !seatName) return;
+      const key = code + '|' + (seatCode || seatName);
+      const buy = Number(row.BUY) || 0;
+      const sell = Number(row.SELL) || 0;
+      const net = Number(row.NET);
+      const current = {
+        code,
+        seatCode,
+        seatName,
+        buy,
+        sell,
+        net: Number.isFinite(net) ? net : buy - sell,
+      };
+      const old = bySeat.get(key);
+      if (!old || Math.abs(current.net) > Math.abs(old.net)) bySeat.set(key, current);
+    });
+  });
+  return Array.from(bySeat.values());
+}
+
+function buildHotMoneyRows(rows, seatRows) {
+  const stocks = new Map(rows.map(row => [row.code, row]));
+  const grouped = new Map();
+  seatRows.forEach(seat => {
+    const rule = hotMoneySeat(seat.seatName);
+    if (!rule) return;
+    let stock = grouped.get(seat.code);
+    if (!stock) {
+      const base = stocks.get(seat.code);
+      if (!base) return;
+      stock = { ...base, seats: new Map() };
+      grouped.set(seat.code, stock);
+    }
+    const old = stock.seats.get(rule.alias);
+    if (old) {
+      old.net += seat.net;
+      old.buy += seat.buy;
+      old.sell += seat.sell;
+      if (!old.branches.includes(seat.seatName)) old.branches.push(seat.seatName);
+    } else {
+      stock.seats.set(rule.alias, {
+        alias: rule.alias,
+        reference: rule.reference || '',
+        net: seat.net,
+        buy: seat.buy,
+        sell: seat.sell,
+        branches: [seat.seatName],
+      });
+    }
+  });
+  return Array.from(grouped.values()).map(stock => {
+    const seats = Array.from(stock.seats.values())
+      .sort((a, b) => Math.abs(b.net) - Math.abs(a.net))
+      .slice(0, 6);
+    return {
+      ...stock,
+      seats,
+      maxSeat: seats.reduce((max, seat) => Math.max(max, Math.abs(seat.net)), 0),
+      totalSeat: seats.reduce((sum, seat) => sum + Math.abs(seat.net), 0),
+    };
+  }).sort((a, b) => b.maxSeat - a.maxSeat || b.totalSeat - a.totalSeat).slice(0, 20);
+}
+
 async function fetchLonghu(date) {
   const filterText = "(TRADE_DATE='" + date + "')";
   const url = 'https://datacenter-web.eastmoney.com/api/data/v1/get?' +
@@ -1863,11 +2065,57 @@ async function fetchLonghu(date) {
       if (explain && !item.explain.includes(explain)) item.explain += ' / ' + explain;
     }
   });
-  return Array.from(bySymbol.values()).sort((a, b) => b.net - a.net);
+  const uniqueRows = Array.from(bySymbol.values()).sort((a, b) => b.net - a.net);
+  const seatRows = await fetchLonghuSeats(date);
+  return {
+    rows: uniqueRows,
+    hot: buildHotMoneyRows(uniqueRows, seatRows),
+  };
+}
+
+function renderHotMoney() {
+  const rows = state.lhHot || [];
+  $('#hotMoneyTitle').textContent = fmtCN(state.lhDate) + '游资龙虎榜 · 热度TOP20';
+  const legend = $('#hotSeatLegend');
+  if (legend && !legend.dataset.ready) {
+    legend.innerHTML = HOT_MONEY_REFERENCES.map(item =>
+      '<div class="seat-map-row"><b>' + esc(item[0]) + '</b><span>' + esc(item[1]) + '</span></div>'
+    ).join('');
+    legend.dataset.ready = '1';
+  }
+  if (!rows.length) {
+    $('#hotMoneyTable').innerHTML =
+      '<div class="k" style="padding:14px 10px">该日期没有识别到常用游资席位。</div>';
+    return;
+  }
+  const syms = rows.map(row => row.sym);
+  $('#hotMoneyTable').innerHTML = '<table class="hot-money-table">' +
+    '<thead><tr><th style="width:58px">排名</th><th style="width:150px">股票名称</th>' +
+    '<th>席位信息</th></tr></thead><tbody>' +
+    rows.map((row, index) => {
+      STOCK_NAMES[row.sym] = row.name;
+      return '<tr>' +
+        '<td class="hot-money-rank">' + String(index + 1).padStart(2, '0') + '</td>' +
+        '<td class="hot-money-stock"><button type="button" data-hot-sym="' + esc(row.sym) + '">' +
+        esc(row.name) + '</button></td>' +
+        '<td><div class="hot-money-seats">' +
+        row.seats.map(seat => {
+          const tone = seat.net >= 0 ? 'in' : 'out';
+          const amount = (seat.net > 0 ? '+' : '') + formatAmount(seat.net);
+          const title = '原始营业部：' + seat.branches.join(' / ') +
+            (seat.reference ? ' · 参考：' + seat.reference : '');
+          return '<span class="hot-money-seat ' + tone + '" title="' + esc(title) + '">' +
+            '<b>' + esc(seat.alias) + '</b>' + esc(amount) + '</span>';
+        }).join('') + '</div></td></tr>';
+    }).join('') + '</tbody></table>';
+  $$('#hotMoneyTable [data-hot-sym]').forEach(button => {
+    button.addEventListener('click', () => openStock(button.dataset.hotSym, syms, state.lhDate));
+  });
 }
 
 function renderLonghu() {
   const rows = state.lhRows || [];
+  renderHotMoney();
   const filtered = rows.filter(row => {
     if (state.lhFilter === 'buy') return row.net > 0;
     if (state.lhFilter === 'sell') return row.net < 0;
@@ -1925,7 +2173,9 @@ async function loadLonghu(date, force) {
   state.lhDate = date;
   $('#lhDate').value = date;
   if (!force && LH_CACHE.has(date)) {
-    state.lhRows = LH_CACHE.get(date);
+    const cached = LH_CACHE.get(date);
+    state.lhRows = Array.isArray(cached) ? cached : cached.rows;
+    state.lhHot = Array.isArray(cached) ? [] : cached.hot;
     renderLonghu();
     return;
   }
@@ -1933,16 +2183,19 @@ async function loadLonghu(date, force) {
   state.lhLoading = true;
   $('#lhBadge').textContent = '加载中…';
   $('#lhSummary').innerHTML = '';
+  $('#hotMoneyTable').innerHTML = '<div class="k" style="padding:14px 2px">正在整理游资席位…</div>';
   $('#lhTable').innerHTML = '<div class="k" style="padding:14px 2px">正在读取 ' + esc(date) + ' 龙虎榜…</div>';
   try {
-    const rows = await fetchLonghu(date);
+    const value = await fetchLonghu(date);
     if (token !== lhRequestToken) return;
-    LH_CACHE.set(date, rows);
-    state.lhRows = rows;
+    LH_CACHE.set(date, value);
+    state.lhRows = value.rows;
+    state.lhHot = value.hot;
     renderLonghu();
   } catch (error) {
     if (token !== lhRequestToken) return;
     $('#lhBadge').textContent = '加载失败';
+    $('#hotMoneyTable').innerHTML = '<div class="k" style="padding:14px 10px">游资席位加载失败。</div>';
     $('#lhTable').innerHTML = '<div class="k" style="padding:14px 2px">龙虎榜加载失败：' +
       esc(error && error.message || error) + '</div>';
   } finally {
