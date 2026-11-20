@@ -4,6 +4,9 @@ on:
   schedule:
     - cron: "20 9 * * 1-5"
   workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/update-dabanke.yml"
 
 permissions:
   contents: write
@@ -18,14 +21,73 @@ jobs:
           python-version: "3.12"
       - name: Fetch latest public review data
         run: python3 tools/fetch_dabanke.py --latest --limit 1
+      - name: Fetch latest first-board data
+        run: python3 tools/fetch_first_boards.py --latest
+      - name: Fetch latest 3+ board snapshot
+        run: python3 tools/fetch_lianban_snapshot.py --latest
+      - name: Rebuild single-file page
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          from pathlib import Path
+
+          root = Path(".")
+          index = root / "index.html"
+          source = index.read_text(encoding="utf-8")
+          first = json.loads((root / "first_board_data.json").read_text(encoding="utf-8"))
+          snapshot = json.loads((root / "lianban_snapshot.json").read_text(encoding="utf-8"))
+
+          days = {}
+          for date, day in sorted((first.get("days") or {}).items()):
+              stocks = [[
+                  stock.get("sym", ""),
+                  stock.get("name", ""),
+                  stock.get("theme", ""),
+                  stock.get("reason", ""),
+                  stock.get("change", ""),
+                  stock.get("status", ""),
+                  stock.get("statusText", ""),
+                  stock.get("firstTime", ""),
+                  int(stock.get("opens") or 0),
+              ] for stock in (day.get("stocks") or [])]
+              days[date] = [
+                  int(day.get("sealed") or 0),
+                  int(day.get("total") or len(stocks)),
+                  day.get("rate", ""),
+                  stocks,
+              ]
+
+          first_value = json.dumps(
+              {"days": days}, ensure_ascii=False, separators=(",", ":")
+          ).replace("</", "<\\/")
+          snapshot_value = json.dumps(
+              snapshot, ensure_ascii=False, separators=(",", ":")
+          ).replace("</", "<\\/")
+          start = "/* SINGLE_FILE_DATA_START */"
+          end = "/* SINGLE_FILE_DATA_END */"
+          block = (
+              start
+              + "\nconst EMBEDDED_FIRST_BOARDS="
+              + first_value
+              + ";\nconst EMBEDDED_LIANBAN_SNAPSHOT="
+              + snapshot_value
+              + ";\n"
+              + end
+          )
+          pattern = re.compile(re.escape(start) + r".*?" + re.escape(end), re.S)
+          updated = pattern.sub(lambda _: block, source, count=1)
+          index.write_text(updated, encoding="utf-8")
+          PY
       - name: Commit data
         run: |
-          if git diff --quiet -- dabanke_data.json; then
+          if git diff --quiet -- dabanke_data.json first_board_data.json lianban_snapshot.json index.html; then
             echo "No data changes."
             exit 0
           fi
           git config user.name "tiantianban-bot"
           git config user.email "tiantianban-bot@users.noreply.github.com"
-          git add dabanke_data.json
+          git add dabanke_data.json first_board_data.json lianban_snapshot.json index.html
           git commit -m "chore: update dabanke review data"
           git push
