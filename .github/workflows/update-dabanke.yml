@@ -52,11 +52,22 @@ jobs:
                   stock.get("firstTime", ""),
                   int(stock.get("opens") or 0),
               ] for stock in (day.get("stocks") or [])]
+              reasons = [
+                  [
+                      sym,
+                      item.get("name", ""),
+                      int(item.get("boards") or 0),
+                      item.get("theme", ""),
+                      item.get("reason", ""),
+                  ]
+                  for sym, item in sorted((day.get("reasons") or {}).items())
+              ]
               days[date] = [
                   int(day.get("sealed") or 0),
                   int(day.get("total") or len(stocks)),
                   day.get("rate", ""),
                   stocks,
+                  reasons,
               ]
 
           first_value = json.dumps(
