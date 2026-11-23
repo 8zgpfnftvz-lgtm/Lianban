@@ -1,7 +1,7 @@
 /* 天天板 · 连板统计 PWA Service Worker
  * 只缓存同源页面本体；腾讯行情、东财涨停池、开盘啦接口不缓存。
  */
-const CACHE = 'ttb-lbtj-v20261116-5';
+const CACHE = 'ttb-lbtj-v20261124-1';
 const ASSETS = [
   './',
   './index.html',
@@ -11,10 +11,7 @@ const ASSETS = [
   './icon-180.png',
   './icon-192.png',
   './icon-512.png',
-  './icon-maskable-512.png',
-  './dabanke_data.json',
-  './first_board_data.json',
-  './lianban_snapshot.json'
+  './icon-maskable-512.png'
 ];
 
 self.addEventListener('install', event => {
@@ -39,22 +36,32 @@ self.addEventListener('fetch', event => {
   try { url = new URL(req.url); } catch (e) { return; }
   if (url.origin !== self.location.origin) return;   // 行情/接口走网络
 
-  // 导航请求：网络优先，断网回退缓存
+  // 导航请求：先显示上次缓存，同时后台更新下一条版本。
   if (req.mode === 'navigate') {
-    event.respondWith(
-      fetch(req).then(res => {
+    const cached = caches.match('./index.html').then(hit => hit || caches.match('./'));
+    const network = fetch(req).then(res => {
+      if (res && res.ok) {
         const copy = res.clone();
-        caches.open(CACHE).then(cache => cache.put('./index.html', copy)).catch(() => {});
-        return res;
-      }).catch(() => caches.match('./index.html').then(hit => hit || caches.match('./')))
-    );
+        return caches.open(CACHE).then(async cache => {
+          const previous = await cache.match('./index.html');
+          const changed = previous && previous.headers.get('etag') !== res.headers.get('etag');
+          await cache.put('./index.html', copy);
+          if (changed) {
+            const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+            clients.forEach(client => client.postMessage({ type: 'INDEX_UPDATED' }));
+          }
+          return res;
+        });
+      }
+      return res;
+    }).catch(() => null);
+    event.waitUntil(network.catch(() => {}));
+    event.respondWith(cached.then(hit => hit || network).then(res => res || caches.match('./')));
     return;
   }
 
   // 盘后数据每天更新：网络优先，失败时回退到上一次缓存。
-  if (url.pathname.endsWith('/dabanke_data.json') ||
-      url.pathname.endsWith('/first_board_data.json') ||
-      url.pathname.endsWith('/lianban_snapshot.json')) {
+  if (url.pathname.endsWith('/dabanke_data.json')) {
     event.respondWith(
       fetch(req).then(res => {
         const copy = res.clone();
