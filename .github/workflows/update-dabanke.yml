@@ -41,20 +41,28 @@ jobs:
 
           days = {}
           for date, day in sorted((first.get("days") or {}).items()):
-              stocks = [[
-                  stock.get("sym", ""),
-                  stock.get("name", ""),
-                  stock.get("theme", ""),
-                  stock.get("reason", ""),
-                  stock.get("change", ""),
-                  stock.get("status", ""),
-                  stock.get("statusText", ""),
-                  stock.get("firstTime", ""),
-                  int(stock.get("opens") or 0),
-                  float(stock.get("fund") or 0),
-                  float(stock.get("turnover") or 0),
-                  stock.get("industry", ""),
-              ] for stock in (day.get("stocks") or [])]
+              stocks = []
+              for stock in (day.get("stocks") or []):
+                  sym = stock.get("sym", "")
+                  if not (
+                      sym.startswith(("sh600", "sh601", "sh603", "sh605"))
+                      or sym.startswith(("sz000", "sz001", "sz002", "sz003"))
+                  ):
+                      continue
+                  stocks.append([
+                      sym,
+                      stock.get("name", ""),
+                      stock.get("theme", ""),
+                      stock.get("reason", ""),
+                      stock.get("change", ""),
+                      stock.get("status", ""),
+                      stock.get("statusText", ""),
+                      stock.get("firstTime", ""),
+                      int(stock.get("opens") or 0),
+                      float(stock.get("fund") or 0),
+                      float(stock.get("turnover") or 0),
+                      stock.get("industry", ""),
+                  ])
               reasons = [
                   [
                       sym,
@@ -66,9 +74,9 @@ jobs:
                   for sym, item in sorted((day.get("reasons") or {}).items())
               ]
               days[date] = [
-                  int(day.get("sealed") or 0),
-                  int(day.get("total") or len(stocks)),
-                  day.get("rate", ""),
+                  sum(stock[5] == "success" for stock in stocks),
+                  len(stocks),
+                  "",
                   stocks,
                   reasons,
                   day.get("source", ""),
