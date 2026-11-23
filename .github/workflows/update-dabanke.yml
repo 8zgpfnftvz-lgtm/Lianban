@@ -51,6 +51,9 @@ jobs:
                   stock.get("statusText", ""),
                   stock.get("firstTime", ""),
                   int(stock.get("opens") or 0),
+                  float(stock.get("fund") or 0),
+                  float(stock.get("turnover") or 0),
+                  stock.get("industry", ""),
               ] for stock in (day.get("stocks") or [])]
               reasons = [
                   [
@@ -68,6 +71,9 @@ jobs:
                   day.get("rate", ""),
                   stocks,
                   reasons,
+                  day.get("source", ""),
+                  day.get("fetchedAt", ""),
+                  bool(day.get("reasonsAligned")),
               ]
 
           first_value = json.dumps(
@@ -76,14 +82,16 @@ jobs:
           snapshot_value = json.dumps(
               snapshot, ensure_ascii=False, separators=(",", ":")
           ).replace("</", "<\\/")
+          first_js = json.dumps(first_value, ensure_ascii=False).replace("</", "<\\/")
+          snapshot_js = json.dumps(snapshot_value, ensure_ascii=False).replace("</", "<\\/")
           start = "/* SINGLE_FILE_DATA_START */"
           end = "/* SINGLE_FILE_DATA_END */"
           block = (
               start
-              + "\nconst EMBEDDED_FIRST_BOARDS="
-              + first_value
-              + ";\nconst EMBEDDED_LIANBAN_SNAPSHOT="
-              + snapshot_value
+              + "\nconst EMBEDDED_FIRST_BOARDS_JSON="
+              + first_js
+              + ";\nconst EMBEDDED_LIANBAN_SNAPSHOT_JSON="
+              + snapshot_js
               + ";\n"
               + end
           )
