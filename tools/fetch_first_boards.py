@@ -48,6 +48,13 @@ def format_market_symbol(code: str, market: int) -> str:
     return "sz" + code
 
 
+def is_main_board_symbol(symbol: str) -> bool:
+    return (
+        symbol.startswith(("sh600", "sh601", "sh603", "sh605"))
+        or symbol.startswith(("sz000", "sz001", "sz002", "sz003"))
+    )
+
+
 def format_bar_time(value) -> str:
     text = str(int(value or 0)).zfill(6)
     return text[:2] + ":" + text[2:4] + ":" + text[4:] if len(text) == 6 else ""
@@ -156,7 +163,7 @@ def fetch_eastmoney_day(requested_day: str, allow_latest: bool = False) -> tuple
             "detail": detail,
             "reasonSource": "开盘啦" if kpl else "行业",
         }
-        if boards != 1:
+        if boards != 1 or not is_main_board_symbol(symbol):
             continue
         first_rows.append({
             "sym": symbol,
