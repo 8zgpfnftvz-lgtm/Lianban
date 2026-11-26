@@ -1,7 +1,7 @@
 /* 天天板 · 连板统计 PWA Service Worker
  * 只缓存同源页面本体；腾讯行情、东财涨停池、开盘啦接口不缓存。
  */
-const CACHE = 'ttb-lbtj-v20261126-2';
+const CACHE = 'ttb-lbtj-v20261126-3';
 const ASSETS = [
   './',
   './index.html',

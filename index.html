@@ -960,6 +960,8 @@ const FIRST_BOARD_DAY_CACHE = new Map();
 let firstBoardsPromise = null;
 let firstBoardRenderToken = 0;
 let firstBoardIdleTimer = null;
+let liveFirstBoardPromise = null;
+let liveFirstBoardDay = null;
 let lianbanSnapshotMerged = false;
 let lianbanSnapshotPromise = null;
 const STOCK_NAMES = {};
@@ -2357,9 +2359,17 @@ function renderFirstBoards() {
   badge.textContent = '加载中…';
   note.textContent = date + ' 首板数据加载中…';
   box.innerHTML = '<div class="k" style="padding:12px 2px">正在读取首板统计…</div>';
-  loadFirstBoardData().then(() => {
+  loadFirstBoardData().then(async () => {
     if (token !== firstBoardRenderToken || date !== state.date) return;
-    const day = getFirstBoardDay(date);
+    let day = getFirstBoardDay(date);
+    if (date === HIST.date || date === localDateString()) {
+      try {
+        const live = await fetchLiveFirstBoard();
+        if (live && (!day || live.date >= day.date)) day = live;
+      } catch (error) { }
+    }
+    if (token !== firstBoardRenderToken || date !== state.date) return;
+    const displayDate = day && day.date ? day.date : date;
     if (!day) {
       badge.textContent = '暂无数据';
       note.textContent = date + ' 暂无首板存档；新交易日会由工作流自动补充。';
@@ -2381,7 +2391,7 @@ function renderFirstBoards() {
     const alignmentText = usesEastmoney
       ? (day.reasonsAligned ? ' · 开盘啦原因已对齐' : ' · 原因使用行业兜底')
       : '';
-    note.innerHTML = '<b>' + esc(date) + '</b> 共 ' + stocks.length +
+    note.innerHTML = '<b>' + esc(displayDate) + '</b> 共 ' + stocks.length +
       ' 只首板股<span class="k"> · 来源：' + esc(sourceText) + fetchedText + alignmentText + '</span>';
     if (!stocks.length) {
       box.innerHTML = '<div class="k" style="padding:12px 2px">当天没有沪深主板首板股。</div>';
@@ -2412,7 +2422,7 @@ function renderFirstBoards() {
           '</tr>';
       }).join('') + '</tbody></table></div>';
     box.querySelectorAll('.fb-stock-btn').forEach(button => {
-      button.addEventListener('click', () => openStock(button.dataset.sym, syms, date));
+      button.addEventListener('click', () => openStock(button.dataset.sym, syms, displayDate));
     });
   }).catch(error => {
     if (token !== firstBoardRenderToken || date !== state.date) return;
@@ -2692,12 +2702,20 @@ function jsonpPool(url) {
   });
 }
 
-async function fetchPool(date) {
+async function fetchPoolSnapshot(date) {
   const url = EM_POOL + date.replace(/-/g, '');
   let j = null;
   try { j = await fetchJSON(url); } catch (e) { j = await jsonpPool(url); }
   if (!j || !j.data || !Array.isArray(j.data.pool)) throw new Error('涨停池返回异常');
-  return j.data.pool;
+  const qdate = String(j.data.qdate || '');
+  const actualDate = qdate.length === 8
+    ? qdate.slice(0, 4) + '-' + qdate.slice(4, 6) + '-' + qdate.slice(6)
+    : date;
+  return { pool: j.data.pool, date: actualDate };
+}
+
+async function fetchPool(date) {
+  return (await fetchPoolSnapshot(date)).pool;
 }
 
 async function fetchKpl(date) {
@@ -2719,6 +2737,110 @@ async function fetchKpl(date) {
     });
   });
   return map;
+}
+
+async function fetchKplPost(date) {
+  const body = new URLSearchParams({
+    a: 'GetPlateInfo_w38',
+    st: '100',
+    c: 'DailyLimitResumption',
+    PhoneOSNew: '1',
+    DeviceID: 'tiantianban-pwa',
+    VerSion: '5.21.0.2',
+    Index: '0',
+    apiv: 'w42',
+    Day: date,
+  });
+  const response = await fetch('https://apphwhq.longhuvip.com/w1/api/index.php', {
+    method: 'POST',
+    body,
+    cache: 'no-store',
+  });
+  if (!response.ok) throw new Error('开盘啦 HTTP ' + response.status);
+  const value = await response.json();
+  const map = {};
+  (value.list || []).forEach(group => {
+    const groupName = String(group.ZSName || '').trim();
+    (group.StockList || []).forEach(row => {
+      if (!Array.isArray(row) || row.length < 18) return;
+      const code = String(row[0] || '').padStart(6, '0');
+      if (code.length !== 6) return;
+      const sym = symOfCode(code);
+      let theme = String(row[16] || '').trim();
+      if (!theme || theme === '-' || theme === '其他') theme = groupName;
+      map[sym] = {
+        name: String(row[1] || '').trim(),
+        theme,
+        reason: theme || groupName,
+        detail: String(row[17] || '').trim(),
+        concepts: String(row[11] || '').trim(),
+      };
+    });
+  });
+  return { date: String(value.date || ''), map };
+}
+
+function formatBarTime(value) {
+  const text = String(Number(value) || 0).padStart(6, '0');
+  return text.length === 6 ? text.slice(0, 2) + ':' + text.slice(2, 4) + ':' + text.slice(4) : '';
+}
+
+function fetchLiveFirstBoard() {
+  if (liveFirstBoardPromise) return liveFirstBoardPromise;
+  liveFirstBoardPromise = fetchPoolSnapshot(localDateString()).then(async snapshot => {
+    let reasonResult = { date: '', map: {} };
+    try { reasonResult = await fetchKplPost(snapshot.date); } catch (error) { }
+    const aligned = reasonResult.date === snapshot.date;
+    const stocks = [];
+    const reasons = {};
+    snapshot.pool.forEach(item => {
+      const symbol = symOfCode(item.c);
+      if (!symbol) return;
+      const boards = Math.max(1, Number(item.lbc) || 1);
+      const reason = aligned ? reasonResult.map[symbol] : null;
+      const theme = (reason && reason.theme) || String(item.hybk || '').trim() || '其他';
+      const reasonText = (reason && reason.reason) || theme;
+      reasons[symbol] = {
+        name: String(item.n || '').trim(),
+        boards,
+        theme,
+        reason: reasonText,
+      };
+      if (boards !== 1 || !isMainBoardSymbol(symbol)) return;
+      const change = Number(item.zdp) || 0;
+      stocks.push({
+        sym: symbol,
+        name: String(item.n || '').trim(),
+        theme,
+        reason: reasonText,
+        change: (change > 0 ? '+' : '') + change.toFixed(2) + '%',
+        status: 'success',
+        statusText: '封板',
+        firstTime: formatBarTime(item.fbt),
+        opens: Number(item.zbc) || 0,
+        fund: Number(item.fund) || 0,
+        turnover: Number(item.hs) || 0,
+        industry: String(item.hybk || '').trim(),
+      });
+    });
+    const day = {
+      date: snapshot.date,
+      source: '东方财富涨停池（实时） + 开盘啦 DailyLimitResumption',
+      fetchedAt: new Date().toISOString(),
+      reasonsAligned: aligned,
+      sealed: stocks.length,
+      total: stocks.length,
+      stocks,
+      reasons,
+    };
+    liveFirstBoardDay = day;
+    FIRST_BOARD_DAY_CACHE.set(day.date, day);
+    return day;
+  }).catch(error => {
+    liveFirstBoardPromise = null;
+    throw error;
+  });
+  return liveFirstBoardPromise;
 }
 
 function applyDay(date, pool, kplMap) {
