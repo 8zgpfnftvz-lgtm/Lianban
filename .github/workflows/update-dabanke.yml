@@ -3,6 +3,7 @@ name: Update Dabanke review data
 on:
   schedule:
     - cron: "20 9 * * 1-5"
+    - cron: "20 10 * * 1-5"
   workflow_dispatch:
   push:
     paths:
